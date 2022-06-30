@@ -16,10 +16,10 @@ The dimension for a bacteria is around 10 micrometers. On the display, it is pos
 - [X] Bacterium class
 - [X] App class
 - [X] drawing axis
-- [] drawing the cells
-- [] drawing the bacteria
-- [] compute spring/internal interaction
-- [] bacteria movement
+- [ ] drawing the cells
+- [ ] drawing the bacteria
+- [ ] compute spring/internal interaction
+- [ ] bacteria movement
 
 ## Dependencies
 
