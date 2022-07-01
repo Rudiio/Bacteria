@@ -9,11 +9,13 @@ class Bacterium:
     - a list of cells: Cells
     - a list of torques: Torques """
 
-    def __init__(self,N=0,Cells = [],Torques = []):
+    def __init__(self,N=0,Cells : list[cell.Cell] = [],Torques = [],l = 1.0,theta = np.pi):
         """Constructor for the class Bacterium"""
         self.N = N
         self.Cells = Cells
         self.Torques = Torques
+        self.theta = theta
+        self.spring_rest_l = l
 
     def __str__(self):
         """Display the bacterium informations whit the print function"""
