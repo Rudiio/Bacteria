@@ -26,6 +26,10 @@ class Bacterium:
         for i in self.Torques:
             print(i)
         return("")
+    
+    def spring_interactions_velocity(self):
+        """Calculate the velocity that comes from the spring forces/torques"""
+        
 
 if __name__=="__main__":
     print("test")
