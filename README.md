@@ -16,17 +16,20 @@ The dimension for a bacteria is around 10 micrometers. On the display, it is pos
 - [X] Bacterium class
 - [X] App class
 - [X] drawing axis
-- [ ] drawing the cells
-- [ ] drawing the bacteria
+- [X] drawing the cells
+- [X] drawing the bacteria
+- [ ] drawing the case of the bacteria
 - [ ] compute spring/internal interaction
 - [ ] bacteria movement
 
 ## Dependencies
 
-The program relies on the Tkinter API for the GUI and on Numpy for the arrays and vector computations.
+The program relies on the pygame API for the graphical interface and on Numpy for the arrays and vector computations. There is also a version using Tkinter but it not complete.
 
-Tkinter is natively installed with Python 3
+To install pygame (with pip package manager)
 
-To install Numpy (with pip package  manager)
+``` pip install pygame```
+
+To install Numpy (with pip package manager)
 
 ``` pip install numpy ```
