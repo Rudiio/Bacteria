@@ -4,7 +4,7 @@ import black
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 import numpy  as np
-import cell
+import disk
 import bacterium as bact
 import model
 
@@ -25,7 +25,6 @@ class Application(model.Model):
 
     def __init__(self):
         """Constructor for the display/tkinter class"""
-
         #Creation of the window/tk object
         pygame.init()
         model.Model.__init__(self)
@@ -52,6 +51,7 @@ class Application(model.Model):
         self.axis_origin = 30   
 
         #Drawing the axis
+        self.axis_state = True
         self.zoom_state = 1 #zoom and dezoom state
         self.draw_axis()
 
@@ -59,20 +59,26 @@ class Application(model.Model):
         self.draw_bacteria()
 
 
-
     def mainloop(self):
         """Main loop of the application/simulation"""
 
         while self.running:
-
+            # Increasing the time
+            self.increment_time()
+            
             # Events
             self.event()
 
             # Fill the background with white
-            self.window.fill((255, 255, 255))
+            # self.window.fill((255, 255, 255))
+            self.window.fill((220,220,220))
 
             # Draw the axises
-            self.draw_axis()
+            if(self.axis_state):
+                self.draw_axis()
+
+            #Draw the informations
+            self.draw_informations()
             
             #Move the bacteria
             self.Move_bacteria()
@@ -83,8 +89,10 @@ class Application(model.Model):
 
             # Updating the screen
             pygame.display.flip()
-            pygame.time.delay(50)
-        
+            # pygame.time.delay(50)
+    
+    ### ------------------ Drawing methods ----------------------------------###
+
     def draw_axis(self):
         "Draw the axises"
 
@@ -92,6 +100,7 @@ class Application(model.Model):
         grad_width = 5
         grad_text_offset = 0
         grad_text_xoffset = -3 
+
         #Font loading
         self.font = pygame.font.SysFont("msreferencesansserif",12)
 
@@ -108,7 +117,7 @@ class Application(model.Model):
         ypos = self.height - self.axis_origin
         i=0
         while(xpos <= self.width):
-            pygame.draw.line(self.window,(0,0,0),start_pos=[xpos,self.height-self.axis_origin-grad_width],end_pos=[
+            pygame.draw.line(self.window,(0,0,0),start_pos=[xpos,self.height-self.axis_origin],end_pos=[
                                     xpos,self.height-self.axis_origin+grad_width],width=1)
             if(self.graduation<1):
                 text = self.font.render("{:.2f}".format(i*self.graduation),True,self.black)
@@ -125,7 +134,7 @@ class Application(model.Model):
         grad_text_offset = 17
         grad_text_xoffset = -8 
         while(ypos > 0):
-            pygame.draw.line(self.window,(0,0,0),start_pos=[self.axis_origin-grad_width,ypos],end_pos=[self.axis_origin+grad_width,
+            pygame.draw.line(self.window,(0,0,0),start_pos=[self.axis_origin-grad_width,ypos],end_pos=[self.axis_origin,
                                     ypos],width=1)
             if(self.graduation<1):
                 text = self.font.render("{:.2f}".format(i*self.graduation),True,self.black)
@@ -142,8 +151,8 @@ class Application(model.Model):
         """Draw a single bacterium"""
 
         #Drawing the cells
-        for i in range(0,bact.N):
-            ccell = bact.Cells[i] #Current cell
+        for i in range(0,bact.p_i):
+            ccell = bact.Disks[i] #Current cell
             
             #converting the positions from micrometers to pixels
             p_x = ccell.X[0]*self.convert/self.graduation + self.axis_origin
@@ -155,8 +164,8 @@ class Application(model.Model):
             pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray,width=1)
 
             #drawing the lines if it note the last
-            if(i<bact.N-1):
-                ncell = bact.Cells[i+1] #Current cell
+            if(i<bact.p_i-1):
+                ncell = bact.Disks[i+1] #Current cell
 
                 #converting the positions from micrometers to pixels for the next cell
                 p_x_next = ncell.X[0]*self.convert/self.graduation + self.axis_origin
@@ -172,6 +181,52 @@ class Application(model.Model):
 
         for bact in self.bacteria:
             self.draw_bacterium(bact)
+
+    def draw_informations(self):
+        """Draw the simulations informations"""
+    
+        #Font loading
+        self.font = pygame.font.SysFont("msreferencesansserif",12)
+
+        #Informations positions
+        x = self.width - 150
+        y = 5
+        distance = 20
+
+        # Number of bacteria
+        text = self.font.render(f"Number of bacteria : {self.N}",True,self.black)
+        self.window.blit(text,(x,y))
+        y+= distance
+
+        # elapsed time
+        text = self.font.render(f"Elapsed time : {self.time}",True,self.black)
+        self.window.blit(text,(x,y))
+        y+= distance
+
+        # delta t
+        text = self.font.render(f"dt : {self.dt}",True,self.black)
+        self.window.blit(text,(x,y))
+
+
+
+    ### ----------------------- Events methods ---------------------------------------
+
+    def event(self):
+        """Manage the events of the simulation"""
+        
+        # Event loop
+        for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.stop()
+                    if event.key == pygame.K_k:
+                        self.dezoom()
+                    if event.key == pygame.K_l:
+                        self.zoom()
+                    if event.key == pygame.K_a:
+                        self.axis_state = not(self.axis_state)
 
     def zoom(self):
         """Do a zoom"""
@@ -222,24 +277,9 @@ class Application(model.Model):
             else:
                 self.convert -= 5
             self.zoom_state +=1
-
-    def event(self):
-        """Manage the events of the simulation"""
-        
-        # Event loop
-        for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.running = False
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.stop()
-                    if event.key == pygame.K_k:
-                        self.dezoom()
-                    if event.key == pygame.K_l:
-                        self.zoom()
     
     def stop(self):
-        """Close the simulation"""
+        """Close the window"""
         self.running=False
 
         
