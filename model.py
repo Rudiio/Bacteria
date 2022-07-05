@@ -36,6 +36,16 @@ class Model:
         self.bacteria[0].Disks.append(disk3)
         self.bacteria[0].p_i+=1
 
+        # disk1 = disk.Disk(X=np.array([1,5]),mass=0.1,ray=self.ray)
+        # self.bacteria = [bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,color=(139,0,0))]
+        # self.N+=1
+        # disk2 = disk.Disk(X=np.array([disk1.X[0]+self.bacteria[0].spring_rest_l+10,disk1.X[1]]),mass=0.1,ray=self.ray)
+        # self.bacteria[0].Disks.append(disk2)
+        # self.bacteria[0].p_i+=1
+        # disk3 = disk.Disk(X=np.array([disk2.X[0]+self.bacteria[0].spring_rest_l,disk2.X[1]+5]),mass=0.1,ray=self.ray)
+        # self.bacteria[0].Disks.append(disk3)
+        # self.bacteria[0].p_i+=1
+
         disk1 = disk.Disk(X=np.array([5,4]),mass=0.1,ray=self.ray)
         disk2 = disk.Disk(X=np.array([disk1.X[0],disk1.X[1]-self.rest_spring_l]),mass=0.1,ray=self.ray)
         disk3 = disk.Disk(X=np.array([disk2.X[0],disk2.X[1]-self.rest_spring_l]),mass=0.1,ray=self.ray)

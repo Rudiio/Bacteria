@@ -1,13 +1,18 @@
 from os import environ
-from turtle import Turtle
+from turtle import Turtle, width
+from xml.dom import XML_NAMESPACE
 import black
+import pygments
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 import numpy  as np
 import disk
 import bacterium as bact
 import model
-
+from numpy.linalg import norm
+import subprocess
+import os
+import datetime
 
 class Application(model.Model):
     """Class for handleling the graphical aspect of the simulations
@@ -89,7 +94,7 @@ class Application(model.Model):
 
             # Updating the screen
             pygame.display.flip()
-            # pygame.time.delay(50)
+            pygame.time.delay(50)
     
     ### ------------------ Drawing methods ----------------------------------###
 
@@ -125,7 +130,10 @@ class Application(model.Model):
                 # self.text_axis.append(self.canva.create_text(xpos,self.height-self.axis_origin+grad_width + grad_text_offset,text="{:.2f}".format(i*self.graduation),font=('sans-serif 10')))
             else:
                 text = self.font.render(f"{int(i*self.graduation)}",True,self.black)
-                self.window.blit(text,(xpos + grad_text_xoffset,self.height-self.axis_origin+grad_width + grad_text_offset))
+                number_offset = len(f"{int(i*self.graduation)}")
+                if(number_offset==1):
+                    number_offset=0
+                self.window.blit(text,(xpos + grad_text_xoffset - number_offset*2,self.height-self.axis_origin+grad_width + grad_text_offset))
                 # self.text_axis.append(self.canva.create_text(xpos,self.height-self.axis_origin+grad_width + grad_text_offset,text=f"{int(i*self.graduation)}",font=('sans-serif 10')))
             i+=1
             xpos += self.convert
@@ -139,11 +147,12 @@ class Application(model.Model):
             if(self.graduation<1):
                 text = self.font.render("{:.2f}".format(i*self.graduation),True,self.black)
                 self.window.blit(text,(self.axis_origin-grad_width - grad_text_offset,ypos + grad_text_xoffset))
-                # self.canva.create_text(self.axis_origin-grad_width - grad_text_offset,ypos,text="{:.2f}".format(i*self.graduation),font=('sans-serif 10')))
             else:
                 text = self.font.render(f"{int(i*self.graduation)}",True,self.black)
-                self.window.blit(text,(self.axis_origin-grad_width - grad_text_offset,ypos + grad_text_xoffset))
-                # self.text_axis.append(self.canva.create_text(self.axis_origin-grad_width - grad_text_offset,ypos,text=f"{int(i*self.graduation)}",font=('sans-serif 10')))
+                number_offset = len(f"{int(i*self.graduation)}")
+                if(number_offset==1):
+                    number_offset=0
+                self.window.blit(text,(self.axis_origin-grad_width - grad_text_offset - number_offset*2,ypos + grad_text_xoffset))
             i+=1
             ypos -= self.convert
     
@@ -152,35 +161,35 @@ class Application(model.Model):
 
         #Drawing the cells
         for i in range(0,bact.p_i):
-            ccell = bact.Disks[i] #Current cell
+            cdisk = bact.Disks[i] #Current disk
             
             #converting the positions from micrometers to pixels
-            p_x = ccell.X[0]*self.convert/self.graduation + self.axis_origin
-            p_y = self.height - ccell.X[1]*self.convert/self.graduation - self.axis_origin
-            p_ray = ccell.ray*self.convert/self.graduation
-            # print(p_ray)
+            p_x = cdisk.X[0]*self.convert/self.graduation + self.axis_origin
+            p_y = self.height - cdisk.X[1]*self.convert/self.graduation - self.axis_origin
+            p_ray = cdisk.ray*self.convert/self.graduation
 
-            #Drawing the actual cell
-            pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray,width=1)
 
             #drawing the lines if it note the last
             if(i<bact.p_i-1):
-                ncell = bact.Disks[i+1] #Current cell
+                ndisk = bact.Disks[i+1] #Current cell
 
                 #converting the positions from micrometers to pixels for the next cell
-                p_x_next = ncell.X[0]*self.convert/self.graduation + self.axis_origin
-                p_y_next = self.height - ncell.X[1]*self.convert/self.graduation - self.axis_origin
-                p_ray_next = ncell.ray*self.convert/self.graduation
+                p_x_next = ndisk.X[0]*self.convert/self.graduation + self.axis_origin
+                p_y_next = self.height - ndisk.X[1]*self.convert/self.graduation - self.axis_origin
+                p_ray_next = ndisk.ray*self.convert/self.graduation
 
                 #drawing the lines
                 pygame.draw.line(self.window,(0,0,255),[p_x,p_y],[p_x_next,p_y_next],width=1)
-
+            
+            #Drawing the actual cell
+            pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray,width=1)
 
     def draw_bacteria(self):
         """Draw all the bacteria of the simulation"""
 
         for bact in self.bacteria:
             self.draw_bacterium(bact)
+            # self.draw_bacterium_hull(bact)
 
     def draw_informations(self):
         """Draw the simulations informations"""
@@ -207,7 +216,104 @@ class Application(model.Model):
         text = self.font.render(f"dt : {self.dt}",True,self.black)
         self.window.blit(text,(x,y))
 
+    def draw_bacterium_hull(self,bact : bact.Bacterium):
+        """Draw the hull of the bacteria : spherocylinder"""
+        # Points du dessus
+        x = np.zeros((bact.p_i,2))
+        x_next = np.zeros((bact.p_i,2))
 
+        # Points du dessous
+        y = np.zeros((bact.p_i,2))
+        y_next = np.zeros((bact.p_i,2))
+
+        #ray offset
+        ray_offset = 0
+
+        #iteration on the disks
+        for i in range(bact.p_i-1):
+            cdisk = bact.Disks[i] #Current disk
+            ndisk = bact.Disks[i+1]
+
+            #converting the positions from micrometers to pixels
+            p_x = cdisk.X[0]*self.convert/self.graduation + self.axis_origin
+            p_y = self.height - cdisk.X[1]*self.convert/self.graduation - self.axis_origin
+            p_ray = cdisk.ray*self.convert/self.graduation + ray_offset
+            p_x_next = ndisk.X[0]*self.convert/self.graduation + self.axis_origin
+            p_y_next = self.height - ndisk.X[1]*self.convert/self.graduation - self.axis_origin
+            p_ray_next = ndisk.ray*self.convert/self.graduation + ray_offset
+            
+            #Calculating the angle's vectors
+            vec1 = np.array([p_x_next - p_x,p_y_next-p_y])
+            vec2 = np.array([p_x,0])
+            alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)))
+
+            #angle 
+            alpha1 = np.pi/2 + alpha
+            alpha2 = alpha - np.pi/2
+
+            #Calculation of the new points for  the current cell
+            x1 = np.array([p_x + p_ray*np.cos(alpha1),p_y + p_ray*np.sin(alpha1)])
+            x2 = np.array([p_x + p_ray*np.cos(alpha2),p_y + p_ray*np.sin(alpha2)])
+
+            # #Calculation of the new points for the next cell
+            alpha = alpha - np.pi
+            alpha1 = alpha + np.pi/2
+            alpha2 = alpha - np.pi/2
+
+            x3 = [p_x_next + p_ray*np.cos(alpha1),p_y_next + p_ray*np.sin(alpha1)]
+            x4 = [p_x_next + p_ray*np.cos(alpha2),p_y_next + p_ray*np.sin(alpha2)]
+
+            # pygame.draw.line(self.window,self.black,x1,x4)
+            # pygame.draw.line(self.window,self.black,x2,x3)
+
+            if(norm(x2)<norm(x1)):
+                temp = x1
+                x1 = x2
+                x2= temp
+            if(norm(x4)<norm(x3)):
+                temp = x3
+                x3 = x4
+                x4 = temp
+
+            if(i==0):
+                x[i] =  np.zeros(2)
+                x_next[i] = x1
+                x[i+1] = x4
+
+                y[i] = np.zeros(2)
+                y_next[i] = x2
+                y[i+1] = x3
+
+            elif(i==bact.p_i-2):
+                x_next[i] = x1
+                x[i+1] = x4
+                x_next[i+1] = np.zeros(2)
+
+                y_next[i] = x2
+                y[i+1] = x3
+                y_next[i+1] = np.zeros(2)
+            else:
+                x_next[i] = x1
+                x[i+1] = x4
+
+                y_next[i] = x2
+                y[i+1] = x3
+        
+        above = (x+y_next)/2
+        below =  (y+x_next)/2
+
+        above[0]= y_next[0]
+        above[bact.p_i -1] = x[bact.p_i-1]
+
+        below[0] = x_next[0]
+        below[bact.p_i -1] = y[bact.p_i-1]
+
+        # for i in range(bact.p_i-1):
+            # pygame.draw.line(self.window,self.black,list(above[i]),list(above[i+1]),width =2)
+            # pygame.draw.line(self.window,self.black,list(below[i]),list(below[i+1]),width =2)
+        
+        for i in range(bact.p_i-1):
+            pygame.draw.polygon(self.window,bact.color,[list(above[i]),list(above[i+1]),list(below[i+1]),list(below[i])])
 
     ### ----------------------- Events methods ---------------------------------------
 
@@ -227,6 +333,9 @@ class Application(model.Model):
                         self.zoom()
                     if event.key == pygame.K_a:
                         self.axis_state = not(self.axis_state)
+                    if event.key == pygame.K_p:
+                        e = datetime.datetime.now()
+                        pygame.image.save(self.window,"./screenshots/screenshot_" + "%s_%s_%s_" % (e.day, e.month, e.year) + "%s_%s_%s" % (e.hour, e.minute, e.second) + ".png")
 
     def zoom(self):
         """Do a zoom"""
@@ -254,7 +363,6 @@ class Application(model.Model):
             self.convert += 5
             self.zoom_state -=1
 
-    
     def dezoom(self):
         """Do a zoom"""
 
@@ -283,7 +391,6 @@ class Application(model.Model):
         self.running=False
 
         
-
 if __name__=="__main__":
     app = Application()
     app.mainloop()

@@ -5,11 +5,20 @@
 ## Introduction
 
 This project consist in modeling the morphogenesis of micro-colonies of bacteria that support bending.
-Our microscopic model is composed of spherical cells that are linked by springs.
+Our microscopic model is composed of disks that are linked by springs.
 
 ## Simulation dimensions
 
 The dimension for a bacteria is around 10 micrometers. On the display, it is possible to change the scale micrometer/pixel, but it is natively fixed to 1 um = 50 p
+
+
+## Commands
+- **A** : show/hide the axises
+- **K** : zoom
+- **L** : dezoom
+- **p** : take a screenshot
+
+
 ## TODO
 
 - [X] Cell class
@@ -19,7 +28,7 @@ The dimension for a bacteria is around 10 micrometers. On the display, it is pos
 - [X] drawing the cells
 - [X] drawing the bacteria
 - [ ] drawing the case of the bacteria
-- [ ] compute spring/internal interaction
+- [X] compute spring/internal interaction
 - [ ] bacteria movement
 
 ## Dependencies
