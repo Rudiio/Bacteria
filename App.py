@@ -102,7 +102,7 @@ class Application(model.Model):
         grad_text_xoffset = -3 
 
         #Font loading
-        self.font = pygame.font.SysFont("msreferencesansserif",12)
+        self.font = pygame.font.SysFont("msreferencesansserif",11)
 
         #x-axis
         pygame.draw.line(self.window,(0,0,0),start_pos=[self.axis_origin,self.height-self.axis_origin],end_pos=[((self.width-self.axis_origin)//self.convert)*self.convert + self.axis_origin ,
@@ -186,7 +186,7 @@ class Application(model.Model):
         """Draw the simulations informations"""
     
         #Font loading
-        self.font = pygame.font.SysFont("msreferencesansserif",12)
+        self.font = pygame.font.SysFont("msreferencesansserif",11)
 
         #Informations positions
         x = self.width - 150

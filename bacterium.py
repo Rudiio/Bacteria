@@ -39,7 +39,7 @@ class Bacterium:
         # Loop on all the Disks
         for k in range(self.p_i):
             # print(self.torsion_spring_par(k))
-            self.Disks[k].V = self.linear_spring(k) + self.torsion_spring_par(k) +self.torsion_spring_bot(k)
+            self.Disks[k].V = self.linear_spring(k) + self.torsion_spring_par(k) + self.torsion_spring_bot(k)
 
     def linear_spring(self,k):
         """Calculates the velocity created by the linear springs"""
@@ -73,7 +73,7 @@ class Bacterium:
             Xj2 = self.Disks[k+2].X
 
             # term in j,j+1,j+2 with cos
-            V -= self.kt_par/(norm(Xj2 - Xj1)*norm(Xj - Xj1) +self.eps)*((np.dot((Xj2 - Xj1),(Xj - Xj1)))/(norm(Xj2 - Xj1)*(Xj - Xj1)+self.eps) - np.cos(self.theta))*\
+            V -= self.kt_par/(norm(Xj2 - Xj1)*norm(Xj - Xj1) +self.eps)*((np.dot((Xj2 - Xj1),(Xj - Xj1)))/(norm(Xj2 - Xj1)*norm(Xj - Xj1)+self.eps) - np.cos(self.theta))*\
                 ((Xj2 - Xj1)-np.dot((Xj2 - Xj1),(Xj - Xj1))*(Xj - Xj1)/(norm(Xj-Xj1)**2+self.eps))
         
         elif k==1 :
