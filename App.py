@@ -1,8 +1,5 @@
 from os import environ
 from turtle import Turtle, width
-from xml.dom import XML_NAMESPACE
-import black
-import pygments
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 import numpy  as np
@@ -13,6 +10,7 @@ from numpy.linalg import norm
 import subprocess
 import os
 import datetime
+import random
 
 class Application(model.Model):
     """Class for handleling the graphical aspect of the simulations
@@ -36,7 +34,7 @@ class Application(model.Model):
         
         """Model parameters"""
         # self.generate_bacterium()
-        self.generate_random_bacteria(10)
+        self.generate_random_bacteria(20)
 
         """Display parameters"""
         #Size of the window 
@@ -62,8 +60,8 @@ class Application(model.Model):
         self.draw_axis()
 
         #Drawing the bacteria
+        self.drawing_bacteria_state=1
         self.draw_bacteria()
-
 
     def mainloop(self):
         """Main loop of the application/simulation"""
@@ -79,18 +77,18 @@ class Application(model.Model):
             # self.window.fill((255, 255, 255))
             self.window.fill((220,220,220))
 
+            #Move the bacteria
+            self.Move_bacteria()
+
+            # Draw the bacteria
+            self.draw_bacteria()
+
             # Draw the axises
             if(self.axis_state):
                 self.draw_axis()
 
             #Draw the informations
             self.draw_informations()
-            
-            #Move the bacteria
-            self.Move_bacteria()
-
-            # Draw the bacteria
-            self.draw_bacteria()
 
             # Updating the screen
             pygame.display.flip()
@@ -166,7 +164,7 @@ class Application(model.Model):
             #converting the positions from micrometers to pixels
             p_x = cdisk.X[0]*self.convert/self.graduation + self.axis_origin
             p_y = self.height - cdisk.X[1]*self.convert/self.graduation - self.axis_origin
-            p_ray = cdisk.ray*self.convert/self.graduation
+            p_ray = cdisk.radius*self.convert/self.graduation
 
 
             #drawing the lines if it note the last
@@ -176,7 +174,7 @@ class Application(model.Model):
                 #converting the positions from micrometers to pixels for the next cell
                 p_x_next = ndisk.X[0]*self.convert/self.graduation + self.axis_origin
                 p_y_next = self.height - ndisk.X[1]*self.convert/self.graduation - self.axis_origin
-                p_ray_next = ndisk.ray*self.convert/self.graduation
+                p_ray_next = ndisk.radius*self.convert/self.graduation
 
                 #drawing the lines
                 pygame.draw.line(self.window,(0,0,255),[p_x,p_y],[p_x_next,p_y_next],width=1)
@@ -188,8 +186,13 @@ class Application(model.Model):
         """Draw all the bacteria of the simulation"""
 
         for bact in self.bacteria:
-            self.draw_bacterium(bact)
-            self.draw_bacterium_hull(bact)
+            if(self.drawing_bacteria_state==1):
+                self.draw_bacterium(bact)
+            elif(self.drawing_bacteria_state==2):
+                self.draw_bacterium(bact)
+                self.draw_bacterium_hull(bact)
+            else:
+                self.draw_bacterium_full(bact)
 
     def draw_informations(self):
         """Draw the simulations informations"""
@@ -237,15 +240,20 @@ class Application(model.Model):
             #converting the positions from micrometers to pixels
             p_x = cdisk.X[0]*self.convert/self.graduation + self.axis_origin
             p_y = self.height - cdisk.X[1]*self.convert/self.graduation - self.axis_origin
-            p_ray = cdisk.ray*self.convert/self.graduation + ray_offset
+            p_ray = cdisk.radius*self.convert/self.graduation + ray_offset
             p_x_next = ndisk.X[0]*self.convert/self.graduation + self.axis_origin
             p_y_next = self.height - ndisk.X[1]*self.convert/self.graduation - self.axis_origin
-            p_ray_next = ndisk.ray*self.convert/self.graduation + ray_offset
+            p_ray_next = ndisk.radius*self.convert/self.graduation + ray_offset
             
             #Calculating the angle's vectors
             vec1 = np.array([p_x_next - p_x,p_y_next-p_y])
             vec2 = np.array([p_x,0])
-            alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)))
+            
+            alpha = 0
+            if(p_y_next - p_y <=0):
+                alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)))
+            else:
+                alpha = np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)))
 
             #angle 
             alpha1 = np.pi/2 + alpha
@@ -262,58 +270,73 @@ class Application(model.Model):
 
             x3 = [p_x_next + p_ray*np.cos(alpha1),p_y_next + p_ray*np.sin(alpha1)]
             x4 = [p_x_next + p_ray*np.cos(alpha2),p_y_next + p_ray*np.sin(alpha2)]
+            
+            #drawing the lines
+            pygame.draw.line(self.window,bact.color,x1,x4)
+            pygame.draw.line(self.window,bact.color,x2,x3)
 
-            pygame.draw.line(self.window,self.black,x1,x4)
-            pygame.draw.line(self.window,self.black,x2,x3)
+    def draw_bacterium_full(self,bact : bact.Bacterium):
+        """Draw the hull of the bacteria : spherocylinder and colors  the inside"""
+        # Points du dessus
+        x = np.zeros((bact.p_i,2))
+        x_next = np.zeros((bact.p_i,2))
 
-            if(norm(x2)<norm(x1)):
-                temp = x1
-                x1 = x2
-                x2= temp
-            if(norm(x4)<norm(x3)):
-                temp = x3
-                x3 = x4
-                x4 = temp
+        # Points du dessous
+        y = np.zeros((bact.p_i,2))
+        y_next = np.zeros((bact.p_i,2))
 
-            if(i==0):
-                x[i] =  np.zeros(2)
-                x_next[i] = x1
-                x[i+1] = x4
+        #ray offset
+        ray_offset = 0
 
-                y[i] = np.zeros(2)
-                y_next[i] = x2
-                y[i+1] = x3
+        #iteration on the disks
+        for i in range(bact.p_i-1):
+            cdisk = bact.Disks[i] #Current disk
+            ndisk = bact.Disks[i+1]
 
-            elif(i==bact.p_i-2):
-                x_next[i] = x1
-                x[i+1] = x4
-                x_next[i+1] = np.zeros(2)
-
-                y_next[i] = x2
-                y[i+1] = x3
-                y_next[i+1] = np.zeros(2)
+            #converting the positions from micrometers to pixels
+            p_x = cdisk.X[0]*self.convert/self.graduation + self.axis_origin
+            p_y = self.height - cdisk.X[1]*self.convert/self.graduation - self.axis_origin
+            p_ray = cdisk.radius*self.convert/self.graduation + ray_offset
+            p_x_next = ndisk.X[0]*self.convert/self.graduation + self.axis_origin
+            p_y_next = self.height - ndisk.X[1]*self.convert/self.graduation - self.axis_origin
+            p_ray_next = ndisk.radius*self.convert/self.graduation + ray_offset
+            
+            #Calculating the angle's vectors
+            vec1 = np.array([p_x_next - p_x,p_y_next-p_y])
+            vec2 = np.array([p_x,0])
+            
+            alpha = 0
+            if(p_y_next - p_y <=0):
+                alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)))
             else:
-                x_next[i] = x1
-                x[i+1] = x4
+                alpha = np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)))
 
-                y_next[i] = x2
-                y[i+1] = x3
-        
-        above = (x+y_next)/2
-        below =  (y+x_next)/2
+            #angle 
+            alpha1 = np.pi/2 + alpha
+            alpha2 = alpha - np.pi/2
 
-        above[0]= y_next[0]
-        above[bact.p_i -1] = x[bact.p_i-1]
+            #Calculation of the new points for  the current cell
+            x1 = np.array([p_x + p_ray*np.cos(alpha1),p_y + p_ray*np.sin(alpha1)])
+            x2 = np.array([p_x + p_ray*np.cos(alpha2),p_y + p_ray*np.sin(alpha2)])
 
-        below[0] = x_next[0]
-        below[bact.p_i -1] = y[bact.p_i-1]
+            # #Calculation of the new points for the next cell
+            alpha = alpha - np.pi
+            alpha1 = alpha + np.pi/2
+            alpha2 = alpha - np.pi/2
 
-        # for i in range(bact.p_i-1):
-            # pygame.draw.line(self.window,self.black,list(above[i]),list(above[i+1]),width =2)
-            # pygame.draw.line(self.window,self.black,list(below[i]),list(below[i+1]),width =2)
-        
-        # for i in range(bact.p_i-1):
-        #     pygame.draw.polygon(self.window,bact.color,[list(above[i]),list(above[i+1]),list(below[i+1]),list(below[i])])
+            x3 = [p_x_next + p_ray*np.cos(alpha1),p_y_next + p_ray*np.sin(alpha1)]
+            x4 = [p_x_next + p_ray*np.cos(alpha2),p_y_next + p_ray*np.sin(alpha2)]
+            
+            #drawing the lines
+            pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
+            pygame.draw.polygon(self.window,bact.color,[x1,x4,x3,x2])
+
+        cdisk = bact.Disks[bact.p_i -1] #Current disk
+        #converting the positions from micrometers to pixels
+        p_x = cdisk.X[0]*self.convert/self.graduation + self.axis_origin
+        p_y = self.height - cdisk.X[1]*self.convert/self.graduation - self.axis_origin
+        p_ray = cdisk.radius*self.convert/self.graduation + ray_offset
+        pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
 
     ### ----------------------- Events methods ---------------------------------------
 
@@ -333,6 +356,16 @@ class Application(model.Model):
                         self.zoom()
                     if event.key == pygame.K_a:
                         self.axis_state = not(self.axis_state)
+                    if event.key == pygame.K_z:
+                        self.generate_random_bacteria(N=random.randint(1,10))
+                        self.N_bacteria()
+                    if event.key == pygame.K_r:
+                        if(self.drawing_bacteria_state==1):
+                            self.drawing_bacteria_state += 1
+                        elif(self.drawing_bacteria_state==2):
+                            self.drawing_bacteria_state += 1
+                        elif(self.drawing_bacteria_state>2):
+                            self.drawing_bacteria_state = 1
                     if event.key == pygame.K_p:
                         e = datetime.datetime.now()
                         pygame.image.save(self.window,"./screenshots/screenshot_" + "%s_%s_%s_" % (e.day, e.month, e.year) + "%s_%s_%s" % (e.hour, e.minute, e.second) + ".png")
@@ -341,9 +374,12 @@ class Application(model.Model):
     def zoom(self):
         """Do a zoom"""
         if(1<self.zoom_state <=5):
-            if(self.zoom_state==5):
+            if(self.zoom_state==1):
                 self.graduation = 1
-                self.convert = 50
+                self.convert = 40
+            elif(self.zoom_state==5):
+                self.graduation = 1
+                self.convert = 25
             else:
                 self.convert += 5
             self.zoom_state -= 1
@@ -357,10 +393,6 @@ class Application(model.Model):
             self.zoom_state -=1
 
         elif(10<=self.zoom_state<=15):
-            # if(self.zoom==15):
-            #     self.graduation = 100
-            #     self.convert = 50
-            # else:
             self.convert += 5
             self.zoom_state -=1
 
@@ -368,7 +400,7 @@ class Application(model.Model):
         """Do a zoom"""
 
         if(self.zoom_state <5):
-            self.convert -= 5
+            self.convert -= 6
             self.zoom_state += 1
 
         elif(5<=self.zoom_state<10):

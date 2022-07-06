@@ -17,6 +17,8 @@ The dimension for a bacteria is around 10 micrometers. On the display, it is pos
 - **K** : zoom
 - **L** : dezoom
 - **p** : take a screenshot
+- **z** : generate a random bacterium
+- **r** : change the display mode of the bacteria
 
 
 ## TODO

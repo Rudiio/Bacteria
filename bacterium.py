@@ -37,9 +37,10 @@ class Bacterium:
         of each cell of the bacterium"""
 
         # Loop on all the Disks
-        for k in range(self.p_i):
-            # print(self.torsion_spring_par(k))
-            self.Disks[k].V = self.linear_spring(k) + self.torsion_spring_par(k) +self.torsion_spring_bot(k)
+        if(self.p_i>1):
+            for k in range(self.p_i):
+                # print(self.torsion_spring_par(k))
+                self.Disks[k].V = self.linear_spring(k) + self.torsion_spring_par(k) +self.torsion_spring_bot(k)
 
     def linear_spring(self,k):
         """Calculates the velocity created by the linear springs"""
