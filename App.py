@@ -52,7 +52,11 @@ class Application(model.Model):
         self.convert = 40 # pixel length of a graduation
 
         #axis offset from the side of the window
-        self.axis_origin = 30   
+        self.axis_origin = 30
+
+        #axis origin (to handle the movements)   
+        self.x_origin = -1
+        self.y_origin = -1
 
         #Drawing the axis
         self.axis_state = True
@@ -123,16 +127,15 @@ class Application(model.Model):
             pygame.draw.line(self.window,(0,0,0),start_pos=[xpos,self.height-self.axis_origin],end_pos=[
                                     xpos,self.height-self.axis_origin+grad_width],width=1)
             if(self.graduation<1):
-                text = self.font.render("{:.2f}".format(i*self.graduation),True,self.black)
+                text = self.font.render("{:.2f}".format(self.x_origin + i*self.graduation),True,self.black)
                 self.window.blit(text,(xpos + grad_text_xoffset,self.height-self.axis_origin+grad_width + grad_text_offset))
-                # self.text_axis.append(self.canva.create_text(xpos,self.height-self.axis_origin+grad_width + grad_text_offset,text="{:.2f}".format(i*self.graduation),font=('sans-serif 10')))
+
             else:
-                text = self.font.render(f"{int(i*self.graduation)}",True,self.black)
-                number_offset = len(f"{int(i*self.graduation)}")
+                text = self.font.render(f"{int(self.x_origin + i*self.graduation)}",True,self.black)
+                number_offset = len(f"{self.x_origin + i*self.graduation}")
                 if(number_offset==1):
                     number_offset=0
                 self.window.blit(text,(xpos + grad_text_xoffset - number_offset*2,self.height-self.axis_origin+grad_width + grad_text_offset))
-                # self.text_axis.append(self.canva.create_text(xpos,self.height-self.axis_origin+grad_width + grad_text_offset,text=f"{int(i*self.graduation)}",font=('sans-serif 10')))
             i+=1
             xpos += self.convert
         
@@ -143,11 +146,11 @@ class Application(model.Model):
             pygame.draw.line(self.window,(0,0,0),start_pos=[self.axis_origin-grad_width,ypos],end_pos=[self.axis_origin,
                                     ypos],width=1)
             if(self.graduation<1):
-                text = self.font.render("{:.2f}".format(i*self.graduation),True,self.black)
+                text = self.font.render("{:.2f}".format(self.y_origin + i*self.graduation),True,self.black)
                 self.window.blit(text,(self.axis_origin-grad_width - grad_text_offset,ypos + grad_text_xoffset))
             else:
-                text = self.font.render(f"{int(i*self.graduation)}",True,self.black)
-                number_offset = len(f"{int(i*self.graduation)}")
+                text = self.font.render(f"{int(self.y_origin + i*self.graduation)}",True,self.black)
+                number_offset = len(f"{int(self.y_origin + i*self.graduation)}")
                 if(number_offset==1):
                     number_offset=0
                 self.window.blit(text,(self.axis_origin-grad_width - grad_text_offset - number_offset*2,ypos + grad_text_xoffset))
@@ -162,8 +165,8 @@ class Application(model.Model):
             cdisk = bact.Disks[i] #Current disk
             
             #converting the positions from micrometers to pixels
-            p_x = cdisk.X[0]*self.convert/self.graduation + self.axis_origin
-            p_y = self.height - cdisk.X[1]*self.convert/self.graduation - self.axis_origin
+            p_x = (cdisk.X[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
+            p_y = self.height - (cdisk.X[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
             p_ray = cdisk.radius*self.convert/self.graduation
 
 
@@ -172,8 +175,8 @@ class Application(model.Model):
                 ndisk = bact.Disks[i+1] #Current cell
 
                 #converting the positions from micrometers to pixels for the next cell
-                p_x_next = ndisk.X[0]*self.convert/self.graduation + self.axis_origin
-                p_y_next = self.height - ndisk.X[1]*self.convert/self.graduation - self.axis_origin
+                p_x_next = (ndisk.X[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
+                p_y_next = self.height - (ndisk.X[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
                 p_ray_next = ndisk.radius*self.convert/self.graduation
 
                 #drawing the lines
@@ -238,11 +241,11 @@ class Application(model.Model):
             ndisk = bact.Disks[i+1]
 
             #converting the positions from micrometers to pixels
-            p_x = cdisk.X[0]*self.convert/self.graduation + self.axis_origin
-            p_y = self.height - cdisk.X[1]*self.convert/self.graduation - self.axis_origin
+            p_x = (cdisk.X[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
+            p_y = self.height - (cdisk.X[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
             p_ray = cdisk.radius*self.convert/self.graduation + ray_offset
-            p_x_next = ndisk.X[0]*self.convert/self.graduation + self.axis_origin
-            p_y_next = self.height - ndisk.X[1]*self.convert/self.graduation - self.axis_origin
+            p_x_next = (ndisk.X[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
+            p_y_next = self.height - (ndisk.X[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
             p_ray_next = ndisk.radius*self.convert/self.graduation + ray_offset
             
             #Calculating the angle's vectors
@@ -294,11 +297,11 @@ class Application(model.Model):
             ndisk = bact.Disks[i+1]
 
             #converting the positions from micrometers to pixels
-            p_x = cdisk.X[0]*self.convert/self.graduation + self.axis_origin
-            p_y = self.height - cdisk.X[1]*self.convert/self.graduation - self.axis_origin
+            p_x = (cdisk.X[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
+            p_y = self.height - (cdisk.X[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
             p_ray = cdisk.radius*self.convert/self.graduation + ray_offset
-            p_x_next = ndisk.X[0]*self.convert/self.graduation + self.axis_origin
-            p_y_next = self.height - ndisk.X[1]*self.convert/self.graduation - self.axis_origin
+            p_x_next = (ndisk.X[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
+            p_y_next = self.height - (ndisk.X[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
             p_ray_next = ndisk.radius*self.convert/self.graduation + ray_offset
             
             #Calculating the angle's vectors
@@ -333,8 +336,8 @@ class Application(model.Model):
 
         cdisk = bact.Disks[bact.p_i -1] #Current disk
         #converting the positions from micrometers to pixels
-        p_x = cdisk.X[0]*self.convert/self.graduation + self.axis_origin
-        p_y = self.height - cdisk.X[1]*self.convert/self.graduation - self.axis_origin
+        p_x = (cdisk.X[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
+        p_y = self.height - (cdisk.X[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
         p_ray = cdisk.radius*self.convert/self.graduation + ray_offset
         pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
 
@@ -366,6 +369,14 @@ class Application(model.Model):
                             self.drawing_bacteria_state += 1
                         elif(self.drawing_bacteria_state>2):
                             self.drawing_bacteria_state = 1
+                    if event.key == pygame.K_RIGHT:
+                        self.x_origin += self.graduation
+                    if event.key == pygame.K_LEFT:
+                        self.x_origin -=self.graduation
+                    if event.key == pygame.K_UP:
+                        self.y_origin +=self.graduation
+                    if event.key == pygame.K_DOWN:
+                        self.y_origin -=self.graduation
                     if event.key == pygame.K_p:
                         e = datetime.datetime.now()
                         pygame.image.save(self.window,"./screenshots/screenshot_" + "%s_%s_%s_" % (e.day, e.month, e.year) + "%s_%s_%s" % (e.hour, e.minute, e.second) + ".png")

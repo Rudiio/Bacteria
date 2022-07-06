@@ -26,15 +26,15 @@ class Model:
         self.time = 0
     
     def generate_bacterium(self):
-        disk1 = disk.Disk(X=np.array([1,5]),mass=0.1,ray=self.radius)
-        self.bacteria = [bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,color=(139,0,0))]
-        self.N+=1
-        disk2 = disk.Disk(X=np.array([disk1.X[0]+self.bacteria[0].spring_rest_l+10,disk1.X[1]]),mass=0.1,ray=self.radius)
-        self.bacteria[0].Disks.append(disk2)
-        self.bacteria[0].p_i+=1
-        disk3 = disk.Disk(X=np.array([disk2.X[0]+self.bacteria[0].spring_rest_l,disk2.X[1]+5]),mass=0.1,ray=self.radius)
-        self.bacteria[0].Disks.append(disk3)
-        self.bacteria[0].p_i+=1
+        # disk1 = disk.Disk(X=np.array([0,0]),mass=0.1,ray=self.radius)
+        # self.bacteria = [bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,color=(139,0,0))]
+        # self.N+=1
+        # disk2 = disk.Disk(X=np.array([disk1.X[0]+self.bacteria[0].spring_rest_l+10,disk1.X[1]]),mass=0.1,ray=self.radius)
+        # self.bacteria[0].Disks.append(disk2)
+        # self.bacteria[0].p_i+=1
+        # disk3 = disk.Disk(X=np.array([disk2.X[0]+self.bacteria[0].spring_rest_l,disk2.X[1]+5]),mass=0.1,ray=self.radius)
+        # self.bacteria[0].Disks.append(disk3)
+        # self.bacteria[0].p_i+=1
 
         # disk1 = disk.Disk(X=np.array([1,5]),mass=0.1,ray=self.radius)
         # self.bacteria = [bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,color=(139,0,0))]
@@ -52,6 +52,9 @@ class Model:
         # disk4 = disk.Disk(X=np.array([disk3.X[0]-self.rest_spring_l,disk3.X[1]]),mass=0.1,ray=self.radius)
         # disk5 = disk.Disk(X=np.array([disk4.X[0]-self.rest_spring_l,disk4.X[1]]),mass=0.1,ray=self.radius)
         # self.bacteria.append (bact.Bacterium(N=5,Disks=[disk1,disk2,disk3,disk4,disk5],l=self.rest_spring_l,theta=self.theta,color=(0,128,0)))
+        
+        # disk1 = disk.Disk(X=np.array([4,7]),mass=0.1,ray=self.radius)
+        # self.bacteria.append (bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,color=(0,128,0)))
         
         self.N_bacteria()
 
