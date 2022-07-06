@@ -1,7 +1,8 @@
+from turtle import distance
 import numpy as np
 import disk
 import bacterium as bact
-
+import random
 
 class Model:
     """Class for the modelisation
@@ -46,14 +47,37 @@ class Model:
         # self.bacteria[0].Disks.append(disk3)
         # self.bacteria[0].p_i+=1
 
-        disk1 = disk.Disk(X=np.array([5,4]),mass=0.1,ray=self.ray)
-        disk2 = disk.Disk(X=np.array([disk1.X[0],disk1.X[1]-self.rest_spring_l]),mass=0.1,ray=self.ray)
-        disk3 = disk.Disk(X=np.array([disk2.X[0],disk2.X[1]-self.rest_spring_l]),mass=0.1,ray=self.ray)
-        disk4 = disk.Disk(X=np.array([disk3.X[0]-self.rest_spring_l,disk3.X[1]]),mass=0.1,ray=self.ray)
-        disk5 = disk.Disk(X=np.array([disk4.X[0]-self.rest_spring_l,disk4.X[1]]),mass=0.1,ray=self.ray)
-        self.bacteria.append (bact.Bacterium(N=5,Disks=[disk1,disk2,disk3,disk4,disk5],l=self.rest_spring_l,theta=self.theta,color=(0,128,0)))
+        # disk1 = disk.Disk(X=np.array([4,7]),mass=0.1,ray=self.ray)
+        # disk2 = disk.Disk(X=np.array([disk1.X[0],disk1.X[1]-self.rest_spring_l]),mass=0.1,ray=self.ray)
+        # disk3 = disk.Disk(X=np.array([disk2.X[0],disk2.X[1]-self.rest_spring_l]),mass=0.1,ray=self.ray)
+        # disk4 = disk.Disk(X=np.array([disk3.X[0]-self.rest_spring_l,disk3.X[1]]),mass=0.1,ray=self.ray)
+        # disk5 = disk.Disk(X=np.array([disk4.X[0]-self.rest_spring_l,disk4.X[1]]),mass=0.1,ray=self.ray)
+        # self.bacteria.append (bact.Bacterium(N=5,Disks=[disk1,disk2,disk3,disk4,disk5],l=self.rest_spring_l,theta=self.theta,color=(0,128,0)))
         
         self.N_bacteria()
+
+    def generate_random_bacteria(self,N=1):
+        """Generate a random bacteria of N disks"""
+        disks = []
+        d = 4*self.ray #disks distance
+        #Generation of the first disk
+        x1 = random.uniform(5,10)
+        x2 = random. uniform(5,10)
+        X = np.array([x1,x2])
+        disks.append(disk.Disk(X,ray=self.ray))
+
+        #Generation of the other disks
+        for i in range(1,N):
+            alpha = random.uniform(0,2*np.pi)
+            x1 = disks[i-1].X[0] + d*np.cos(alpha)
+            x2 = disks[i-1].X[1] + d*np.sin(alpha)
+            disks.append(disk.Disk(np.array([x1,x2]),ray=self.ray))
+        
+        color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        new_bacteria = bact.Bacterium(len(disks),disks,color=color)
+        self.bacteria.append(new_bacteria)
+        self.N_bacteria()
+
 
     def N_bacteria(self):
         """Update the number of bacteria"""

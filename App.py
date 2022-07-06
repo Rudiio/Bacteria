@@ -35,7 +35,8 @@ class Application(model.Model):
         model.Model.__init__(self)
         
         """Model parameters"""
-        self.generate_bacterium()
+        # self.generate_bacterium()
+        self.generate_random_bacteria(10)
 
         """Display parameters"""
         #Size of the window 
@@ -87,14 +88,13 @@ class Application(model.Model):
             
             #Move the bacteria
             self.Move_bacteria()
-            # print(self.bacteria[1])
 
             # Draw the bacteria
             self.draw_bacteria()
 
             # Updating the screen
             pygame.display.flip()
-            pygame.time.delay(50)
+            # pygame.time.delay(50)
     
     ### ------------------ Drawing methods ----------------------------------###
 
@@ -189,7 +189,7 @@ class Application(model.Model):
 
         for bact in self.bacteria:
             self.draw_bacterium(bact)
-            # self.draw_bacterium_hull(bact)
+            self.draw_bacterium_hull(bact)
 
     def draw_informations(self):
         """Draw the simulations informations"""
@@ -263,8 +263,8 @@ class Application(model.Model):
             x3 = [p_x_next + p_ray*np.cos(alpha1),p_y_next + p_ray*np.sin(alpha1)]
             x4 = [p_x_next + p_ray*np.cos(alpha2),p_y_next + p_ray*np.sin(alpha2)]
 
-            # pygame.draw.line(self.window,self.black,x1,x4)
-            # pygame.draw.line(self.window,self.black,x2,x3)
+            pygame.draw.line(self.window,self.black,x1,x4)
+            pygame.draw.line(self.window,self.black,x2,x3)
 
             if(norm(x2)<norm(x1)):
                 temp = x1
@@ -312,8 +312,8 @@ class Application(model.Model):
             # pygame.draw.line(self.window,self.black,list(above[i]),list(above[i+1]),width =2)
             # pygame.draw.line(self.window,self.black,list(below[i]),list(below[i+1]),width =2)
         
-        for i in range(bact.p_i-1):
-            pygame.draw.polygon(self.window,bact.color,[list(above[i]),list(above[i+1]),list(below[i+1]),list(below[i])])
+        # for i in range(bact.p_i-1):
+        #     pygame.draw.polygon(self.window,bact.color,[list(above[i]),list(above[i+1]),list(below[i+1]),list(below[i])])
 
     ### ----------------------- Events methods ---------------------------------------
 
@@ -336,6 +336,7 @@ class Application(model.Model):
                     if event.key == pygame.K_p:
                         e = datetime.datetime.now()
                         pygame.image.save(self.window,"./screenshots/screenshot_" + "%s_%s_%s_" % (e.day, e.month, e.year) + "%s_%s_%s" % (e.hour, e.minute, e.second) + ".png")
+                        print("> screenshot saved")
 
     def zoom(self):
         """Do a zoom"""
