@@ -1,8 +1,9 @@
 import numpy as np
 from pyparsing import NoMatch
+from scipy import rand
 import disk 
 from numpy.linalg import norm
-
+import random
 
 class Bacterium:
     """ Class representing a bacterium 
@@ -13,17 +14,29 @@ class Bacterium:
     - the rest length of the springs l 
     - the stiffness constants ks,kt1, kt2"""
 
-    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi,color = (0,0,0)):
+    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi, color = (0,0,0)):
         """Constructor for the class Bacterium"""
-        self.p_i = N
-        self.Disks = Disks
-        self.theta = theta
-        self.spring_rest_l = l
-        self.ks = 1.e-2
-        self.kt_par = 1.e-2
-        self.kt_bot = 1.e-2
-        self.color = color
-        self.eps = 0.01 
+
+        # Disks variables
+        self.p_i = N        # number of disks
+        self.Disks = Disks  # List of disks
+        self.color = color  # disks colors
+
+        # Springs parameters
+        self.theta = theta  # Rest torque
+        self.spring_rest_l = l  # Rest length
+
+        self.ks = 1.e-2 # Springs linear stiffness
+        self.kt_par = 1.e-2 # Springs torsion parallel stiffness
+        self.kt_bot = 1.e-2 # Springs torsion bot stiffness
+
+        # Growth variable
+        self.k = 0.005    # Growth constant
+        self.t_i = 0    # time of the last addition
+        self.max_disks = 20
+
+        # softening parameter (to avoird division by zero)
+        self.eps = 0.0001 
 
     def __str__(self):
         """Display the bacterium informations whit the print function"""
@@ -32,6 +45,8 @@ class Bacterium:
             print(i)
         return("")
     
+    ###-----------------  Velocity calculation -----------------------
+
     def spring_velocity(self):
         """Calculate the velocity that comes from the spring forces/torques
         of each cell of the bacterium"""
@@ -44,18 +59,24 @@ class Bacterium:
 
     def linear_spring(self,k):
         """Calculates the velocity created by the linear springs"""
+
+        # case : the disk is the head of the bacterium
         if k==0:
             Xj = self.Disks[k].X
             Xj1 = self.Disks[k+1].X
 
             return (self.ks/(self.spring_rest_l**2)*(norm(Xj1 - Xj) - self.spring_rest_l)*
                     (Xj1 - Xj)/(norm(Xj1 - Xj))) 
+        
+        # case the disk is the tail of the bacterium
         elif k==self.p_i-1:
             Xj = self.Disks[k].X
             Xj_1 = self.Disks[k-1].X
 
             return (-self.ks/(self.spring_rest_l**2)*(norm(Xj - Xj_1) - self.spring_rest_l)*
                     (Xj - Xj_1)/norm(Xj-Xj_1))
+        
+        # all the others disks 
         else:
             Xj = self.Disks[k].X
             Xj1 = self.Disks[k+1].X
@@ -68,6 +89,8 @@ class Bacterium:
     def torsion_spring_par(self,k):
         """Calculates the velocity created by the torsion springs for the parallel component"""
         V = 0
+
+        # case : the disk is the head of the bacterium
         if k==0 and self.p_i>=3 :  
             Xj = self.Disks[k].X
             Xj1 = self.Disks[k+1].X
@@ -77,6 +100,7 @@ class Bacterium:
             V -= self.kt_par/(norm(Xj2 - Xj1)*norm(Xj - Xj1) +self.eps)*((np.dot((Xj2 - Xj1),(Xj - Xj1)))/(norm(Xj2 - Xj1)*norm(Xj - Xj1)+self.eps) - np.cos(self.theta))*\
                 ((Xj2 - Xj1)-np.dot((Xj2 - Xj1),(Xj - Xj1))*(Xj - Xj1)/(norm(Xj-Xj1)**2+self.eps))
         
+        # case : the disk is the second of the bacterium
         elif k==1 :
             Xj_1 = self.Disks[k-1].X
             Xj = self.Disks[k].X
@@ -94,6 +118,7 @@ class Bacterium:
                 V -= self.kt_par/(norm(Xj2 - Xj1)*norm(Xj - Xj1)+self.eps)*((np.dot((Xj2 - Xj1),(Xj - Xj1)))/(norm(Xj2 - Xj1)*norm(Xj - Xj1)+self.eps) - np.cos(self.theta))*\
                     ((Xj2 - Xj1)-np.dot((Xj2 - Xj1),(Xj - Xj1))*(Xj - Xj1)/(norm(Xj-Xj1)**2+self.eps))
 
+        # case : the disk is the tail of the bacterium
         elif k==self.p_i-1 and self.p_i>=3:
             Xj_2 = self.Disks[k-2].X
             Xj_1 = self.Disks[k-1].X
@@ -103,6 +128,7 @@ class Bacterium:
             V -= self.kt_par/(norm(Xj -Xj_1)*norm(Xj_2 - Xj_1)+self.eps)*((np.dot((Xj-Xj_1),(Xj_2 - Xj_1)))/(norm(Xj -Xj_1)*norm(Xj_2 - Xj_1)+self.eps) - np.cos(self.theta))*\
                 ((Xj_2 - Xj_1)-np.dot((Xj-Xj_1),(Xj_2 - Xj_1))*(Xj - Xj_1)/(norm(Xj - Xj_1)**2+self.eps))
 
+        # case : the disk is just before the tail of the bacterium
         elif k==self.p_i-2:
             Xj = self.Disks[k].X
 
@@ -120,6 +146,8 @@ class Bacterium:
                 V += self.kt_par/(norm(Xj1 - Xj)*norm(Xj_1 - Xj)+self.eps)*((np.dot((Xj1 - Xj),(Xj_1 - Xj)))/(norm(Xj1 - Xj)*norm(Xj_1 - Xj)+self.eps) - np.cos(self.theta))*\
                     ((Xj_1 - Xj)-np.dot((Xj1 - Xj),(Xj_1 - Xj))*(Xj1 - Xj)/(norm(Xj1 -Xj)**2+self.eps)+\
                         (Xj1 - Xj)-np.dot((Xj1 - Xj),(Xj_1 - Xj))*(Xj_1-Xj)/(norm(Xj_1 - Xj)**2+self.eps))
+        
+        # case : all the other disks
         else :
             Xj_2 = self.Disks[k-2].X
             Xj_1 = self.Disks[k-1].X
@@ -146,6 +174,7 @@ class Bacterium:
         """Calculates the velocity created by the torsion springs for the parallel component"""
         V = 0
 
+        # case : the disk is the head of the bacterium
         if k==0 and self.p_i>=3:
             Xj = self.Disks[k].X
             Xj1 = self.Disks[k+1].X
@@ -155,6 +184,7 @@ class Bacterium:
             V -= self.kt_bot/(norm(Xj2 - Xj1)*norm(Xj - Xj1) + self.eps)*((np.cross((Xj2 - Xj1),(Xj -Xj1)))/(norm(Xj2 - Xj1)*norm(Xj - Xj1)+ self.eps) - np.sin(self.theta))*\
                 np.array([-(Xj2-Xj1)[1]+(((Xj-Xj1)[0])/(norm(Xj-Xj1)**2 + self.eps))*np.cross((Xj-Xj1),(Xj2-Xj1)),(Xj2 - Xj1)[0] + ((Xj - Xj1)[1])/(norm(Xj -Xj1)**2 + self.eps)*np.cross((Xj-Xj1),(Xj2-Xj1))])
         
+        # case : the disk is the second of the bacterium
         elif k==1:
             Xj = self.Disks[k].X
             Xj_1 = self.Disks[k-1].X
@@ -175,6 +205,7 @@ class Bacterium:
                 V -= self.kt_bot/(norm(Xj2 - Xj1)*norm(Xj - Xj1) + self.eps)*((np.cross((Xj2 - Xj1),(Xj -Xj1)))/(norm(Xj2 - Xj1)*norm(Xj - Xj1)+ self.eps) - np.sin(self.theta))*\
                 np.array([-(Xj2-Xj1)[1]+(((Xj-Xj1)[0])/(norm(Xj-Xj1)**2 + self.eps))*np.cross((Xj-Xj1),(Xj2-Xj1)),(Xj2 - Xj1)[0] + ((Xj - Xj1)[1])/(norm(Xj -Xj1)**2+self.eps)*np.cross((Xj-Xj1),(Xj2-Xj1))])
 
+        # case : the disk is the tail of the bacterium
         elif k==self.p_i - 1 and self.p_i>=3:
             Xj_2 = self.Disks[k-2].X
             Xj_1 = self.Disks[k-1].X
@@ -184,6 +215,7 @@ class Bacterium:
             V -= self.kt_bot/(norm(Xj - Xj_1)*norm(Xj_2 - Xj_1) + self.eps)*((np.cross((Xj - Xj_1),(Xj_2 - Xj_1)))/(norm(Xj - Xj_1)*norm(Xj_2 - Xj_1)+ self.eps) -np.sin(self.theta))*\
                 np.array([(Xj_2 - Xj_1)[1] - ((Xj - Xj_1)[0])/(norm(Xj-Xj_1)**2 + self.eps)*np.cross((Xj - Xj_1),(Xj_2 -Xj_1)),-(Xj_2 - Xj_1)[0] - ((Xj - Xj_1)[1])/(norm(Xj-Xj_1)**2 + self.eps)*np.cross((Xj - Xj_1),(Xj_2 -Xj_1))])
         
+        # case : the disk is just before the tail of the bacterium
         elif k==self.p_i -2 :
             Xj = self.Disks[k].X
 
@@ -204,6 +236,7 @@ class Bacterium:
                     (np.array([(Xj_1 - Xj)[1] - (((Xj1-Xj)[0])/(norm(Xj1 - Xj)**2 + self.eps))*np.cross((Xj1 - Xj),(Xj_1 -Xj)),-(Xj_1 - Xj)[0] - (((Xj1-Xj)[1])/(norm(Xj1 - Xj)**2 + self.eps))*np.cross((Xj1 - Xj),(Xj_1 -Xj))]) +\
                     np.array([-(Xj1 -Xj)[1] + (((Xj_1 -Xj)[0])/(norm(Xj_1 -Xj)**2 + self.eps))*np.cross((Xj_1 - Xj),(Xj1 - Xj)),(Xj1 -Xj)[0] + (((Xj_1 -Xj)[1])/(norm(Xj_1 -Xj)**2 + self.eps))*np.cross((Xj_1 - Xj),(Xj1 - Xj))]))
 
+        # case : all the other disks
         else :
             Xj_2 = self.Disks[k-2].X
             Xj_1 = self.Disks[k-1].X
@@ -225,6 +258,80 @@ class Bacterium:
                 np.array([-(Xj2-Xj1)[1]+(((Xj-Xj1)[0])/(norm(Xj-Xj1)**2 + self.eps))*np.cross((Xj-Xj1),(Xj2-Xj1)),(Xj2 - Xj1)[0] + ((Xj - Xj1)[1])/(norm(Xj -Xj1)**2 + self.eps)*np.cross((Xj-Xj1),(Xj2-Xj1))])
         
         return V
+
+    ###------------------ Model bacterium processes -------------------------
+
+    def growth(self,t,method):
+        """ Handle the growth proccess of thre bacterium 
+        add a new disk if t_i > t. The position of the new bacteria depends on method"""
+
+        if( t - self.t_i >= 1/(self.k*self.p_i) and self.p_i < self.max_disks):
+            # Saving the moment we added a new disk
+            self.t_i = 1/(self.k*self.p_i) + self.t_i
+            
+            # print("nb=")
+            # print(self.p_i)
+            # print("time")
+            # print(self.t_i)
+            # print("\n")
+
+            if method==1 :
+                self.add_disk1()
+            elif method==2:
+                self.add_disk2()
+            elif method==3:
+                self.add_disk1()
+            elif method==4:
+                self.add_disk1()
+            elif method==5:
+                self.add_disk1()
+
+    def add_disk1(self):
+        """Add a new disk is added not at equilibrum into the bacterium on one side of the bacterium
+        chosen randomly"""
+        
+        side = random.random()
+
+        # the disk is added in the head
+        if(side > 0.5):
+            l = random.uniform(0.01,self.spring_rest_l-0.01)
+            alpha = random.uniform(np.pi/2,3*np.pi/2)
+            X = np.array([self.Disks[0].X[0] + l*np.cos(alpha),self.Disks[0].X[1] + l*np.sin(alpha)])
+            self.Disks.insert(0,disk.Disk(X,ray=self.Disks[0].radius))
+        
+        # the disk is added in the tail
+        else:
+            l = random.uniform(0.01,self.spring_rest_l-0.01)
+            alpha = random.uniform(0,np.pi)
+
+            if(alpha >np.pi/2):
+                alpha += np.pi
+
+            X = np.array([self.Disks[self.p_i-1].X[0] + l*np.cos(alpha),self.Disks[self.p_i-1].X[1] + l*np.sin(alpha)])
+            self.Disks.append(disk.Disk(X,ray=self.Disks[0].radius))
+        
+        # Updating the number of disks
+        self.p_i +=1
+    
+    def add_disk2(self):
+        """Add a new disk not at equilibrum into the bacterium on both side of the bacterium"""
+
+        # the disk is added in the head
+        l = random.uniform(0.01,self.spring_rest_l-0.01)
+        alpha = random.uniform(np.pi,3*np.pi/2)
+        X = np.array([self.Disks[0].X[0] + l*np.cos(alpha),self.Disks[0].X[1] + l*np.sin(alpha)])
+        self.Disks.insert(0,disk.Disk(X,ray=self.Disks[0].radius))
+        
+        # the disk is added in the tail
+        l = random.uniform(0.01,self.spring_rest_l-0.01)
+        alpha = random.uniform(0,np.pi/2)
+        X = np.array([self.Disks[self.p_i-1].X[0] + l*np.cos(alpha),self.Disks[self.p_i-1].X[1] + l*np.sin(alpha)])
+        self.Disks.append(disk.Disk(X,ray=self.Disks[0].radius))
+        
+        # Updating the number of disks
+        self.p_i +=2
+
+    ###-----------------  Position calculation -----------------------
 
     def Euler_explicit(self,dt):
         """Calculates the position of all the Disks by using 

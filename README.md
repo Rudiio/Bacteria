@@ -9,7 +9,7 @@ Our microscopic model is composed of disks that are linked by springs.
 
 ## Simulation dimensions
 
-The dimension for a bacteria is around 10 micrometers. On the display, it is possible to change the scale micrometer/pixel, but it is natively fixed to 1 um = 50 p
+The dimension for a bacteria is around 10 micrometers. On the display, it is possible to change the scale micrometer/pixel, but it is natively fixed to 1 um = 40 p
 
 
 ## Commands
@@ -19,7 +19,7 @@ The dimension for a bacteria is around 10 micrometers. On the display, it is pos
 - **p** : take a screenshot
 - **z** : generate a random bacterium
 - **r** : change the display mode of the bacteria
-
+- **← → ↑ ↓** : movements (change the origin)
 
 ## TODO
 

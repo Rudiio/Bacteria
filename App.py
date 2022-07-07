@@ -34,7 +34,8 @@ class Application(model.Model):
         
         """Model parameters"""
         # self.generate_bacterium()
-        self.generate_random_bacteria(20)
+        self.generate_random_bacteria(5)
+        self.generate_random_bacteria(5)
 
         """Display parameters"""
         #Size of the window 
@@ -70,10 +71,7 @@ class Application(model.Model):
     def mainloop(self):
         """Main loop of the application/simulation"""
 
-        while self.running:
-            # Increasing the time
-            self.increment_time()
-            
+        while self.running:            
             # Events
             self.event()
 
@@ -82,7 +80,7 @@ class Application(model.Model):
             self.window.fill((220,220,220))
 
             #Move the bacteria
-            self.Move_bacteria()
+            self.bacteria_processes()
 
             # Draw the bacteria
             self.draw_bacteria()
@@ -93,6 +91,9 @@ class Application(model.Model):
 
             #Draw the informations
             self.draw_informations()
+
+            # Increasing the time
+            self.increment_time()
 
             # Updating the screen
             pygame.display.flip()
@@ -270,7 +271,7 @@ class Application(model.Model):
             alpha = alpha - np.pi
             alpha1 = alpha + np.pi/2
             alpha2 = alpha - np.pi/2
-
+    
             x3 = [p_x_next + p_ray*np.cos(alpha1),p_y_next + p_ray*np.sin(alpha1)]
             x4 = [p_x_next + p_ray*np.cos(alpha2),p_y_next + p_ray*np.sin(alpha2)]
             
@@ -348,20 +349,38 @@ class Application(model.Model):
         
         # Event loop
         for event in pygame.event.get():
+                # Supporting the quiting button
                 if event.type == pygame.QUIT:
                     self.running = False
+                
+                # Supporting a key press
                 elif event.type == pygame.KEYDOWN:
+                    # ESC to close the simulation
                     if event.key == pygame.K_ESCAPE:
                         self.stop()
+                    
+                    # K to dezoom
                     if event.key == pygame.K_k:
                         self.dezoom()
+                    
+                    # L to zoom
                     if event.key == pygame.K_l:
                         self.zoom()
+                    
+                    # A to hide/show the axises
                     if event.key == pygame.K_a:
                         self.axis_state = not(self.axis_state)
+                    
+                    # Z to add a new bacterium
                     if event.key == pygame.K_z:
                         self.generate_random_bacteria(N=random.randint(1,10))
                         self.N_bacteria()
+                    
+                    # T to add a new disk into the first bacterium
+                    if event.key == pygame.K_t:
+                        self.bacteria[0].add_disk2()
+                    
+                    # R to change the drawing method
                     if event.key == pygame.K_r:
                         if(self.drawing_bacteria_state==1):
                             self.drawing_bacteria_state += 1
@@ -369,14 +388,24 @@ class Application(model.Model):
                             self.drawing_bacteria_state += 1
                         elif(self.drawing_bacteria_state>2):
                             self.drawing_bacteria_state = 1
+                    
+                    # RIGTH ARROW to go right
                     if event.key == pygame.K_RIGHT:
                         self.x_origin += self.graduation
+                    
+                    # LEFT ARROW to go left
                     if event.key == pygame.K_LEFT:
                         self.x_origin -=self.graduation
+                    
+                     # UP ARROW to go up
                     if event.key == pygame.K_UP:
                         self.y_origin +=self.graduation
+                    
+                    # DOWN ARROW to go down
                     if event.key == pygame.K_DOWN:
                         self.y_origin -=self.graduation
+                    
+                    # P to take a screenshot
                     if event.key == pygame.K_p:
                         e = datetime.datetime.now()
                         pygame.image.save(self.window,"./screenshots/screenshot_" + "%s_%s_%s_" % (e.day, e.month, e.year) + "%s_%s_%s" % (e.hour, e.minute, e.second) + ".png")
