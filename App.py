@@ -34,8 +34,8 @@ class Application(model.Model):
         
         """Model parameters"""
         # self.generate_bacterium()
-        self.generate_random_bacteria(5)
-        self.generate_random_bacteria(5)
+        for i in range(0,1):
+            self.generate_random_bacteria(1)
 
         """Display parameters"""
         #Size of the window 
@@ -97,7 +97,7 @@ class Application(model.Model):
 
             # Updating the screen
             pygame.display.flip()
-            # pygame.time.delay(50)
+            pygame.time.delay(50)
     
     ### ------------------ Drawing methods ----------------------------------###
 
@@ -184,7 +184,10 @@ class Application(model.Model):
                 pygame.draw.line(self.window,(0,0,255),[p_x,p_y],[p_x_next,p_y_next],width=1)
             
             #Drawing the actual cell
-            pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray,width=1)
+            if(i==0):
+                pygame.draw.circle(self.window,self.black,(p_x,p_y),p_ray,width=1)
+            else:
+                pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray,width=1)
 
     def draw_bacteria(self):
         """Draw all the bacteria of the simulation"""
@@ -373,12 +376,12 @@ class Application(model.Model):
                     
                     # Z to add a new bacterium
                     if event.key == pygame.K_z:
-                        self.generate_random_bacteria(N=random.randint(1,10))
+                        self.generate_random_bacteria(1)
                         self.N_bacteria()
                     
                     # T to add a new disk into the first bacterium
                     if event.key == pygame.K_t:
-                        self.bacteria[0].add_disk2()
+                        self.bacteria[0].add_disk1()
                     
                     # R to change the drawing method
                     if event.key == pygame.K_r:

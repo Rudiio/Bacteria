@@ -30,7 +30,7 @@ class Model:
         self.theta = np.pi
 
         # Simulation parameters
-        self.disk_add_method = 1 # decide the position of the new disk
+        self.disk_add_method = 2 # decide the position of the new disk
         self.dt = 0.5
         self.time = 0
     
