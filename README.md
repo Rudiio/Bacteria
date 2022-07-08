@@ -2,12 +2,18 @@
 
 ![python](https://img.shields.io/badge/langage-Python-yellow)
 
-## Introduction
+## Introduction 
 
 This project consist in modeling the morphogenesis of micro-colonies of bacteria that support bending.
-Our microscopic model is composed of disks that are linked by springs.
 
-![simu](https://github.com/Rudiio/Images-factory/blob/main/bacteria1.png)
+## Model presentation
+In our model, a bacteria is constitued of a chain of disks linked by springs.
+- This implies that the disks are subject to linear spring forces that controls the springs length and to torsion spring forces that control the angles of system of 3 disks. 
+
+- Exponential growth of the bacteria are also implemented.
+
+![model](https://github.com/Rudiio/Images-factory/blob/main/model.png)
+
 ## Simulation dimensions
 
 The dimension for a bacteria is around 10 micrometers. On the display, it is possible to change the scale micrometer/pixel, but it is natively fixed to 1 um = 40 p
@@ -24,14 +30,14 @@ The dimension for a bacteria is around 10 micrometers. On the display, it is pos
 
 ## TODO
 
-- [X] Cell class
-- [X] Bacterium class
-- [X] App class
-- [X] drawing axis
-- [X] drawing the cells
-- [X] drawing the bacteria
-- [ ] drawing the case of the bacteria
-- [X] compute spring/internal interaction
+- [X] drawing the case of the bacteria (needs improvements)
+- [X] compute spring/internal interactions
+- [X] external forces 
+- [ ] graphical improvement (auto scaling)
+- [ ] collision detection
+- [ ] growth
+- [ ] bacteria division
+- [ ] external interactions
 - [ ] bacteria movement
 
 ## Dependencies
@@ -45,3 +51,7 @@ To install pygame (with pip package manager)
 To install Numpy (with pip package manager)
 
 ``` pip install numpy ```
+
+## Simulations
+
+![simu](https://github.com/Rudiio/Images-factory/blob/main/bacteria1.png)
