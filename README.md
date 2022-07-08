@@ -7,6 +7,7 @@
 This project consist in modeling the morphogenesis of micro-colonies of bacteria that support bending.
 Our microscopic model is composed of disks that are linked by springs.
 
+![simu](https://github.com/Rudiio/Images-factory/blob/main/bacteria1.png)
 ## Simulation dimensions
 
 The dimension for a bacteria is around 10 micrometers. On the display, it is possible to change the scale micrometer/pixel, but it is natively fixed to 1 um = 40 p

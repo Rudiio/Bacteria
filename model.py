@@ -76,8 +76,8 @@ class Model:
         d = 4*self.radius #disks distance
 
         #Generation of the head
-        x1 = random.uniform(0,20)
-        x2 = random. uniform(0,20)
+        x1 = random.uniform(5,15)
+        x2 = random. uniform(5,15)
         X = np.array([x1,x2])
         disks.append(disk.Disk(X,ray=self.radius))
 
@@ -108,7 +108,7 @@ class Model:
         color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
 
         # Creation of the bacterium 
-        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,color=color)
+        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,t_i=self.time,color=color)
 
         #Adding it into the list of badcteria
         self.bacteria.append(new_bacteria)

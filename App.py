@@ -34,14 +34,14 @@ class Application(model.Model):
         
         """Model parameters"""
         # self.generate_bacterium()
-        for i in range(0,1):
-            self.generate_random_bacteria(1)
+        for i in range(0,5):
+            self.generate_random_bacteria(20)
 
         """Display parameters"""
         #Size of the window 
-        self.height = 500
-        self.width = 700
-        self.window = pygame.display.set_mode([self.width,self.height])
+        self.height = 600
+        self.width = 1000
+        self.window = pygame.display.set_mode([self.width,self.height],pygame.RESIZABLE)
         pygame.display.set_caption("Bacteria micro-colonies simulator")
         self.black =  (0,0,0)
 
@@ -50,7 +50,7 @@ class Application(model.Model):
 
         #Micrometer to pixels conversion
         self.graduation = 1     # graduation in micrometers
-        self.convert = 40 # pixel length of a graduation
+        self.convert = 50 # pixel length of a graduation
 
         #axis offset from the side of the window
         self.axis_origin = 30
@@ -97,7 +97,7 @@ class Application(model.Model):
 
             # Updating the screen
             pygame.display.flip()
-            pygame.time.delay(50)
+            pygame.time.delay(10)
     
     ### ------------------ Drawing methods ----------------------------------###
 

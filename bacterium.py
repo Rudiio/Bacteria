@@ -14,7 +14,7 @@ class Bacterium:
     - the rest length of the springs l 
     - the stiffness constants ks,kt1, kt2"""
 
-    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi, color = (0,0,0)):
+    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi,t_i = 0, color = (0,0,0)):
         """Constructor for the class Bacterium"""
 
         # Disks variables
@@ -32,7 +32,7 @@ class Bacterium:
 
         # Growth variable
         self.k = 0.01    # Growth constant
-        self.t_i = 0    # time of the last addition
+        self.t_i = t_i    # time of the last addition
         self.max_disks = 20
 
         # softening parameter (to avoird division by zero)
@@ -265,16 +265,13 @@ class Bacterium:
         """ Handle the growth proccess of thre bacterium 
         add a new disk if t_i > t. The position of the new bacteria depends on method"""
 
-        if( t - self.t_i >= 1/(self.k*self.p_i) and self.p_i < self.max_disks):
+        rate_i = 1/(self.k*self.p_i) 
+        if(method==2 or method==5):
+            rate_i = 2/(self.k*self.p_i) 
+        if( t - self.t_i >= rate_i and self.p_i < self.max_disks):
             # Saving the moment we added a new disk
-            self.t_i = 1/(self.k*self.p_i) + self.t_i
+            self.t_i = rate_i + self.t_i
             
-            # print("nb=")
-            # print(self.p_i)
-            # print("time")
-            # print(self.t_i)
-            # print("\n")
-
             # One side not equilibrum
             if method==1 :
                 self.add_disk1()
