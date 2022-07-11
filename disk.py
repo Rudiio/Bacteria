@@ -9,7 +9,7 @@ class Disk:
     - its ray in micrometers
     """
 
-    def __init__(self,X = np.zeros(2),V = np.zeros(2),mass=0,ray = 1):
+    def __init__(self,X = np.zeros(2),V = np.zeros(2),mass=1,ray = 1):
         """Constructor for the class Disk"""
         self.X = X
         self.V = V

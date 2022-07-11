@@ -33,7 +33,7 @@ class Model:
         self.disk_add_method = 2 # decide the position of the new disk
         self.dt = 0.5
         self.time = 0
-    
+
     ### ---------------- Bacteria generators ---------------------------
 
     def generate_bacterium(self):
@@ -68,6 +68,12 @@ class Model:
         # self.bacteria.append (bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,color=(0,128,0)))
         
         self.N_bacteria()
+
+    def gen_cell_pos(self,x,y,method):
+        """Generates a cell bacterium"""
+        cell = disk.Disk(np.array([x,y]),ray=self.radius)
+        color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        self.bacteria.append (bact.Bacterium(N=1,Disks=[cell],l=self.rest_spring_l,theta=self.theta,gm=method,color=color))
 
     def generate_random_bacteria(self,N=1):
         """Generate a random bacteria of N disks"""
@@ -108,12 +114,127 @@ class Model:
         color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
 
         # Creation of the bacterium 
-        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,t_i=self.time,color=color)
+        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,t_i=self.time,gm=self.disk_add_method,color=color)
 
         #Adding it into the list of badcteria
         self.bacteria.append(new_bacteria)
         self.N_bacteria()
 
+    def generate_random_bacterium_no_collision(self,N=1):
+        """Generate a random bacteria of N disks without collision"""
+
+        disks = []
+        d = 4*self.radius #disks distance
+
+        #Generation of the head
+        x1 = random.uniform(5,25)
+        x2 = random. uniform(5,25)
+        X = np.array([x1,x2])
+
+        while(self.detect_collision(X,self.bacteria)):
+            x1 = random.uniform(5,15)
+            x2 = random. uniform(5,15)
+            X = np.array([x1,x2])
+
+        disks.append(disk.Disk(X,ray=self.radius))
+        
+        ok = True
+        i=1
+
+        #Generation of the other disks
+        while i <N:
+            # Position generation
+            ok= True
+            alpha = random.uniform(0,2*np.pi)
+            # if alpha >np.pi/2:
+            #     alpha += np.pi
+            x1 = disks[i-1].X[0] + d*np.cos(alpha)
+            x2 = disks[i-1].X[1] + d*np.sin(alpha)
+
+            # Overlapping checking
+            for j in range(0,i):
+                if(norm([x1-disks[j].X[0],x2-disks[j].X[1]])<=2*self.radius):
+                    ok = False
+
+            # Ok position
+            if(ok==True and self.detect_collision(np.array([x1,x2]),self.bacteria)==False):
+                disks.append(disk.Disk(np.array([x1,x2]),ray=self.radius))
+                i+=1
+        
+        # Generation of a color
+        color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+
+        # Creation of the bacterium 
+        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,t_i=self.time,gm=self.disk_add_method,color=color)
+
+        #Adding it into the list of badcteria
+        self.bacteria.append(new_bacteria)
+        self.N_bacteria()
+    
+    def generate_random_bacterium_no_collision_method(self,N=1,method=1):
+        """Generate a random bacteria of N disks without collision"""
+
+        disks = []
+        d = 4*self.radius #disks distance
+
+        #Generation of the head
+        x1 = random.uniform(5,25)
+        x2 = random. uniform(5,25)
+        X = np.array([x1,x2])
+
+        while(self.detect_collision(X,self.bacteria)):
+            x1 = random.uniform(5,15)
+            x2 = random. uniform(5,15)
+            X = np.array([x1,x2])
+
+        disks.append(disk.Disk(X,ray=self.radius))
+        
+        ok = True
+        i=1
+
+        #Generation of the other disks
+        while i <N:
+            # Position generation
+            ok= True
+            alpha = random.uniform(0,2*np.pi)
+            # if alpha >np.pi/2:
+            #     alpha += np.pi
+            x1 = disks[i-1].X[0] + d*np.cos(alpha)
+            x2 = disks[i-1].X[1] + d*np.sin(alpha)
+
+            # Overlapping checking
+            for j in range(0,i):
+                if(norm([x1-disks[j].X[0],x2-disks[j].X[1]])<=2*self.radius):
+                    ok = False
+
+            # Ok position
+            if(ok==True and self.detect_collision(np.array([x1,x2]),self.bacteria)==False):
+                disks.append(disk.Disk(np.array([x1,x2]),ray=self.radius))
+                i+=1
+        
+        # Generation of a color
+        color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+
+        # Creation of the bacterium 
+        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,t_i=self.time,gm=method,color=color)
+
+        #Adding it into the list of badcteria
+        self.bacteria.append(new_bacteria)
+        self.N_bacteria()
+
+    ### ----------------- Collision detection -------------------
+
+    def detect_collision(self,X : np.array,bact: list[bact.Bacterium] =[]):
+        """ Detect if the position X is in collision with another bacterium
+        return True if it detects a collision"""
+
+        for b in bact:
+            for d in b.Disks:
+                if( norm(X - d.X ) <= 2*d.radius):
+                    print("test")
+                    return True
+        return False
+                
     ### ----------------- Mechanical processes ------------------
 
     def bacteria_processes(self):
@@ -127,7 +248,8 @@ class Model:
             bact.Euler_explicit(self.dt)
 
             # Bacterium growth
-            bact.growth(self.time,self.disk_add_method)
+            # bact.growth(self.time,self.disk_add_method)
+            bact.growth(self.time,bact.growth_method)
     
     ### ----------------- Simulation informations updaters ---------------
     def N_bacteria(self):

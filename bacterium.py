@@ -14,7 +14,7 @@ class Bacterium:
     - the rest length of the springs l 
     - the stiffness constants ks,kt1, kt2"""
 
-    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi,t_i = 0, color = (0,0,0)):
+    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi,t_i = 0,gm=1, color = (0,0,0)):
         """Constructor for the class Bacterium"""
 
         # Disks variables
@@ -38,6 +38,9 @@ class Bacterium:
         # softening parameter (to avoird division by zero)
         self.eps = 0.0001 
 
+        #Growth method
+        self.growth_method = gm
+
     def __str__(self):
         """Display the bacterium informations whit the print function"""
         print(f"N = {self.p_i}")
@@ -45,6 +48,16 @@ class Bacterium:
             print(i)
         return("")
     
+    def get_segment_length(self):
+        """ return an array with the length of all the segments """
+        if(self.p_i>1):
+            L = np.zeros(self.p_i -1 )
+            for i in range(0,self.p_i-1):
+                L[i] = norm(self.Disks[i].X - self.Disks[i+1].X)
+            return L
+        else:
+            return np.zeros(1)
+
     ###-----------------  Velocity calculation -----------------------
 
     def spring_velocity(self):
@@ -260,7 +273,7 @@ class Bacterium:
         return V
 
     ###------------------ Model bacterium processes -------------------------
-
+    
     def growth(self,t,method):
         """ Handle the growth proccess of thre bacterium 
         add a new disk if t_i > t. The position of the new bacteria depends on method"""
@@ -282,7 +295,7 @@ class Bacterium:
             
             # At the center
             elif method==3:
-                self.add_disk3()
+                self.add_disk32()
             
             # One side equilibrum
             elif method==4:
@@ -322,7 +335,6 @@ class Bacterium:
         # the disk is added in the tail
         else:
             l = random.uniform(0.01,self.spring_rest_l-0.01)
-            l = self.spring_rest_l
 
             # Calculation of the angle
             if(self.p_i==1):
@@ -372,7 +384,7 @@ class Bacterium:
         self.p_i +=1
 
         # Calculation of the second angle
-        if(self.p_i-1==1):
+        if(self.p_i-1!=1):
             d_head = self.Disks[self.p_i-2]
             d_tail = self.Disks[self.p_i-1]
             
@@ -409,6 +421,35 @@ class Bacterium:
                 mid = int(self.p_i/2)
                 X = np.array([(self.Disks[mid-1].X[0] + self.Disks[mid].X[0])/2,(self.Disks[mid-1].X[1] + self.Disks[mid].X[1])/2])
                 self.Disks.insert(mid,disk.Disk(X,ray=self.Disks[0].radius))
+            self.p_i +=1
+
+    def add_disk32(self):
+        """Add a new disk at the center of the bacterium"""
+
+        if self.p_i == 1:
+            l = random.uniform(0.01,self.spring_rest_l-0.01)
+            alpha = random.uniform(0,2*np.pi)
+            X = np.array([self.Disks[0].X[0] + l*np.cos(alpha),self.Disks[0].X[1] + l*np.sin(alpha)])
+            self.Disks.insert(0,disk.Disk(X,ray=self.Disks[0].radius))
+            self.p_i +=1
+        else:
+            if(self.p_i%2==0):
+                mid = self.p_i//2 - 1
+                X = np.array([(self.Disks[mid].X[0] + self.Disks[mid+1].X[0])/2,(self.Disks[mid].X[1] + self.Disks[mid+1].X[1])/2])
+                self.Disks.insert(mid+1,disk.Disk(X,ray=self.Disks[0].radius))
+            else:
+                mid = self.p_i//2
+                L = self.get_segment_length()
+                S = L.sum()
+                CS = np.cumsum(L)
+                i=0
+                # print(CS)
+                while(CS[i]<S/2 and i<self.p_i):
+                    i+=1
+                
+                X = np.array([(self.Disks[i].X[0] + self.Disks[i+1].X[0])/2,(self.Disks[i].X[1] + self.Disks[i+1].X[1])/2])
+                self.Disks.insert(i+1,disk.Disk(X,ray=self.Disks[0].radius))
+                    
             self.p_i +=1
 
     def add_disk4(self):
@@ -459,6 +500,57 @@ class Bacterium:
         # Updating the number of disks
         self.p_i +=1
     
+    def add_disk42(self):
+        """Add a new disk is added not at equilibrum into the bacterium on one side of the bacterium
+        chosen randomly"""
+        
+        side = random.random()
+
+        # the disk is added in the head
+        if(side > 0.5):
+            l = self.spring_rest_l
+
+            # calculation of the angle
+            if(self.p_i==1):
+                alpha = random.uniform(0,2*np.pi)
+            else :
+                d_head = self.Disks[0]
+                d_tail = self.Disks[1]
+                vec1 = np.array([d_tail.X[0] - d_head.X[0],d_tail.X[1] - d_head.X[1]])
+                vec2 = np.array([2,0])
+
+                if(d_tail.X[1] - d_head.X[1]<=0):
+                    alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+                else:
+                    alpha = np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+                
+            X = np.array([self.Disks[0].X[0] - l*np.cos(alpha),self.Disks[0].X[1] - l*np.sin(alpha)])
+            self.Disks.insert(0,disk.Disk(X,ray=self.Disks[0].radius))
+        
+        # the disk is added in the tail
+        else:
+            l = self.spring_rest_l
+
+            # Calculation of the angle
+            if(self.p_i==1):
+                alpha = random.uniform(0,2*np.pi)
+            else :
+                d_head = self.Disks[self.p_i -2]
+                d_tail = self.Disks[self.p_i -1]
+                vec1 = np.array([d_tail.X[0] - d_head.X[0],d_tail.X[1] - d_head.X[1]])
+                vec2 = np.array([2,0])
+
+                if(d_tail.X[1] - d_head.X[1]<=0):
+                    alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+                else:
+                    alpha = np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+            
+            X = np.array([self.Disks[self.p_i-1].X[0] + l*np.cos(alpha),self.Disks[self.p_i-1].X[1] + l*np.sin(alpha)])
+            self.Disks.append(disk.Disk(X,ray=self.Disks[0].radius))
+        
+        # Updating the number of disks
+        self.p_i +=1
+
     def add_disk5(self):
         """Add a new disk at equilibrum into the bacterium on both side of the bacterium"""
         alpha = 0
@@ -491,6 +583,53 @@ class Bacterium:
         # Updating the number of disks
         self.p_i +=1
 
+    def add_disk52(self):
+        """Add a new disk not at equilibrum into the bacterium on both side of the bacterium"""
+
+        # the disk is added in the head
+        l = self.spring_rest_l
+        alpha = 0
+
+        #Calculation of the first angle
+        if(self.p_i==1):
+            alpha = random.uniform(0,2*np.pi)
+        else :
+            d_head = self.Disks[0]
+            d_tail = self.Disks[1]
+            vec1 = np.array([d_tail.X[0] - d_head.X[0],d_tail.X[1] - d_head.X[1]])
+            vec2 = np.array([2,0])
+
+            if(d_tail.X[1] - d_head.X[1]<=0):
+                alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+            else:
+                alpha = np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+            
+        X = np.array([self.Disks[0].X[0] - l*np.cos(alpha),self.Disks[0].X[1] - l*np.sin(alpha)])
+        self.Disks.insert(0,disk.Disk(X,ray=self.Disks[0].radius))
+        
+        # Updating the number of disks
+        self.p_i +=1
+
+        # Calculation of the second angle
+        if(self.p_i-1!=1):
+            d_head = self.Disks[self.p_i-2]
+            d_tail = self.Disks[self.p_i-1]
+            
+            vec1 = np.array([d_tail.X[0] - d_head.X[0],d_tail.X[1] - d_head.X[1]])
+            vec2 = np.array([2,0])
+
+            if(d_tail.X[1] - d_head.X[1]<=0):
+                alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+            else:
+                alpha = np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+
+        # the disk is added in the tail
+        Y = np.array([self.Disks[self.p_i-1].X[0] + l*np.cos(alpha),self.Disks[self.p_i-1].X[1] + l*np.sin(alpha)])
+        self.Disks.append(disk.Disk(Y,ray=self.Disks[0].radius))
+        
+        # Updating the number of disks
+        self.p_i +=1
+
     ###-----------------  Position calculation -----------------------
 
     def Euler_explicit(self,dt):
@@ -498,7 +637,7 @@ class Bacterium:
         an Euler explicit integrator"""
 
         for i in range(self.p_i):
-            self.Disks[i].X = self.Disks[i].X + dt*self.Disks[i].V
+            self.Disks[i].X = self.Disks[i].X + dt*self.Disks[i].V/self.Disks[i].mass
         
 
 if __name__=="__main__":

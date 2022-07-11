@@ -34,8 +34,21 @@ class Application(model.Model):
         
         """Model parameters"""
         # self.generate_bacterium()
-        for i in range(0,5):
-            self.generate_random_bacteria(20)
+        # for i in range(0,1):
+            # self.generate_random_bacteria(1)
+            # self.generate_random_bacterium_no_collision(10)
+        
+        # self.generate_random_bacterium_no_collision_method(1,1)
+        # self.generate_random_bacterium_no_collision_method(1,2)
+        # self.generate_random_bacterium_no_collision_method(1,3)
+        # self.generate_random_bacterium_no_collision_method(1,4)
+        # self.generate_random_bacterium_no_collision_method(1,5)
+
+        # self.gen_cell_pos(3,5,1)
+        # self.gen_cell_pos(6,5,2)
+        # self.gen_cell_pos(9,5,3)
+        # self.gen_cell_pos(12,5,4)
+        # self.gen_cell_pos(15,5,5)
 
         """Display parameters"""
         #Size of the window 
@@ -71,7 +84,7 @@ class Application(model.Model):
     def mainloop(self):
         """Main loop of the application/simulation"""
 
-        while self.running:            
+        while self.running :            
             # Events
             self.event()
 
@@ -195,9 +208,9 @@ class Application(model.Model):
         for bact in self.bacteria:
             if(self.drawing_bacteria_state==1):
                 self.draw_bacterium(bact)
+                self.draw_bacterium_hull(bact)
             elif(self.drawing_bacteria_state==2):
                 self.draw_bacterium(bact)
-                self.draw_bacterium_hull(bact)
             else:
                 self.draw_bacterium_full(bact)
 
@@ -376,12 +389,12 @@ class Application(model.Model):
                     
                     # Z to add a new bacterium
                     if event.key == pygame.K_z:
-                        self.generate_random_bacteria(1)
+                        self.generate_random_bacteria(10)
                         self.N_bacteria()
                     
                     # T to add a new disk into the first bacterium
                     if event.key == pygame.K_t:
-                        self.bacteria[0].add_disk1()
+                        self.bacteria[0].add_disk32()
                     
                     # R to change the drawing method
                     if event.key == pygame.K_r:
