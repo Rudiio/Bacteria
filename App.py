@@ -13,8 +13,8 @@ import datetime
 import random
 
 class Application(model.Model):
-    """Class for handleling the graphical aspect of the simulations
-    It inherits of the Tk class from the tkinter library
+    """Class for handleling the graphical aspect and interface of the simulations
+    It inherits of the Model class that represents the actual simulation
     
     model components :
     - list of bacteria 
@@ -34,9 +34,9 @@ class Application(model.Model):
         
         """Model parameters"""
         # self.generate_bacterium()
-        # for i in range(0,1):
-            # self.generate_random_bacteria(1)
-            # self.generate_random_bacterium_no_collision(10)
+        for i in range(0,1):
+            # self.generate_random_bacterium_no_collision(5)
+            self.generate_random_bacteria(1)
         
         # self.generate_random_bacterium_no_collision_method(1,1)
         # self.generate_random_bacterium_no_collision_method(1,2)

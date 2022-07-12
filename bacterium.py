@@ -14,7 +14,7 @@ class Bacterium:
     - the rest length of the springs l 
     - the stiffness constants ks,kt1, kt2"""
 
-    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi,t_i = 0,gm=1, color = (0,0,0)):
+    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi,t_i = 0,gm=1,growth_k = 0.01, color = (0,0,0)):
         """Constructor for the class Bacterium"""
 
         # Disks variables
@@ -31,9 +31,9 @@ class Bacterium:
         self.kt_bot = 1.e-2 # Springs torsion bot stiffness
 
         # Growth variable
-        self.k = 0.01    # Growth constant
+        self.k = growth_k    # Growth constant
         self.t_i = t_i    # time of the last addition
-        self.max_disks = 20
+        self.max_disks = 20 # Number maximal of disk contained by a bacterium
 
         # softening parameter (to avoird division by zero)
         self.eps = 0.0001 
@@ -274,14 +274,15 @@ class Bacterium:
 
     ###------------------ Model bacterium processes -------------------------
     
-    def growth(self,t,method):
+    ## GROWTH
+    def growth(self,t,method,max_disks):
         """ Handle the growth proccess of thre bacterium 
         add a new disk if t_i > t. The position of the new bacteria depends on method"""
 
         rate_i = 1/(self.k*self.p_i) 
         if(method==2 or method==5):
             rate_i = 2/(self.k*self.p_i) 
-        if( t - self.t_i >= rate_i and self.p_i < self.max_disks):
+        if( t - self.t_i >= rate_i and self.p_i < max_disks):
             # Saving the moment we added a new disk
             self.t_i = rate_i + self.t_i
             
@@ -299,11 +300,11 @@ class Bacterium:
             
             # One side equilibrum
             elif method==4:
-                self.add_disk4()
+                self.add_disk42()
             
             # Two sides equilibrum
             elif method==5:
-                self.add_disk5()
+                self.add_disk52()
 
     def add_disk1(self):
         """Add a new disk is added not at equilibrum into the bacterium on one side of the bacterium
@@ -630,6 +631,16 @@ class Bacterium:
         # Updating the number of disks
         self.p_i +=1
 
+    ## DIVISION
+
+    def division(self):
+        """Divide the bactierium in two : return 2 lists containing the disks of the bacterium
+        If p_i is even then the lists have the same length, else one will be longer"""
+
+        mid = self.p_i//2
+
+        return self.Disks[0:mid],self.Disks[mid:self.p_i]
+        
     ###-----------------  Position calculation -----------------------
 
     def Euler_explicit(self,dt):

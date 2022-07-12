@@ -17,6 +17,11 @@ class Model:
     def __init__(self):
         """Constructor for the model class"""
         #Creation of the list of bacteria
+        
+        # Simulation parameters
+        self.disk_add_method = 4 # decide the position of the new disk
+        self.dt = 0.5
+        self.time = 0
 
         # Bacteria parameters and variables
         self.bacteria = []
@@ -25,14 +30,15 @@ class Model:
         # disks parameters
         self.radius = 0.5
 
+        # Growth parameters
+        self.k = 0.01 # 0.001    # Growth constant
+        self.max_disks = 20 #1/(self.k*self.dt)
+
+        # print(self.max_disks)
+
         # Springs parameters
         self.rest_spring_l = self.radius
         self.theta = np.pi
-
-        # Simulation parameters
-        self.disk_add_method = 2 # decide the position of the new disk
-        self.dt = 0.5
-        self.time = 0
 
     ### ---------------- Bacteria generators ---------------------------
 
@@ -48,7 +54,7 @@ class Model:
         # self.bacteria[0].p_i+=1
 
         disk1 = disk.Disk(X=np.array([1,5]),mass=0.1,ray=self.radius)
-        self.bacteria = [bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,color=(139,0,0))]
+        self.bacteria = [bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,growth_k=self.k,color=(139,0,0))]
         self.N+=1
         disk2 = disk.Disk(X=np.array([disk1.X[0]+self.bacteria[0].spring_rest_l+10,disk1.X[1]]),mass=0.1,ray=self.radius)
         self.bacteria[0].Disks.append(disk2)
@@ -62,7 +68,7 @@ class Model:
         disk3 = disk.Disk(X=np.array([disk2.X[0],disk2.X[1]-self.rest_spring_l]),mass=0.1,ray=self.radius)
         disk4 = disk.Disk(X=np.array([disk3.X[0]-self.rest_spring_l,disk3.X[1]]),mass=0.1,ray=self.radius)
         disk5 = disk.Disk(X=np.array([disk4.X[0]-self.rest_spring_l,disk4.X[1]]),mass=0.1,ray=self.radius)
-        self.bacteria.append (bact.Bacterium(N=5,Disks=[disk1,disk2,disk3,disk4,disk5],l=self.rest_spring_l,theta=self.theta,color=(0,128,0)))
+        self.bacteria.append (bact.Bacterium(N=5,Disks=[disk1,disk2,disk3,disk4,disk5],l=self.rest_spring_l,theta=self.theta,growth_k=self.k,color=(0,128,0)))
         
         # disk1 = disk.Disk(X=np.array([4,7]),mass=0.1,ray=self.radius)
         # self.bacteria.append (bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,color=(0,128,0)))
@@ -73,7 +79,8 @@ class Model:
         """Generates a cell bacterium"""
         cell = disk.Disk(np.array([x,y]),ray=self.radius)
         color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
-        self.bacteria.append (bact.Bacterium(N=1,Disks=[cell],l=self.rest_spring_l,theta=self.theta,gm=method,color=color))
+        self.bacteria.append (bact.Bacterium(N=1,Disks=[cell],l=self.rest_spring_l,theta=self.theta,gm=method,growth_k=self.k,color=color))
+        self.N +=1
 
     def generate_random_bacteria(self,N=1):
         """Generate a random bacteria of N disks"""
@@ -114,7 +121,7 @@ class Model:
         color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
 
         # Creation of the bacterium 
-        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,t_i=self.time,gm=self.disk_add_method,color=color)
+        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,t_i=self.time,gm=self.disk_add_method,growth_k=self.k,color=color)
 
         #Adding it into the list of badcteria
         self.bacteria.append(new_bacteria)
@@ -127,8 +134,8 @@ class Model:
         d = 4*self.radius #disks distance
 
         #Generation of the head
-        x1 = random.uniform(5,25)
-        x2 = random. uniform(5,25)
+        x1 = random.uniform(5,10)
+        x2 = random. uniform(5,10)
         X = np.array([x1,x2])
 
         while(self.detect_collision(X,self.bacteria)):
@@ -165,7 +172,7 @@ class Model:
         color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
 
         # Creation of the bacterium 
-        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,t_i=self.time,gm=self.disk_add_method,color=color)
+        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,t_i=self.time,gm=self.disk_add_method,growth_k=self.k,color=color)
 
         #Adding it into the list of badcteria
         self.bacteria.append(new_bacteria)
@@ -216,7 +223,7 @@ class Model:
         color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
 
         # Creation of the bacterium 
-        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,t_i=self.time,gm=method,color=color)
+        new_bacteria = bact.Bacterium(len(disks),disks,l=self.radius,t_i=self.time,gm=method,growth_k=self.k,color=color)
 
         #Adding it into the list of badcteria
         self.bacteria.append(new_bacteria)
@@ -235,12 +242,84 @@ class Model:
                     return True
         return False
                 
-    ### ----------------- Mechanical processes ------------------
+    ### ---------------- Division -------------------------------
+    def division(self,i,bacte: bact.Bacterium):
+        """ Divide the bacterium if the maximum number of disks is reached.
+        Create two daughters bacteria"""
+
+        # Checking if the bacterium should divide
+        if(bacte.p_i >= self.max_disks):
+            # Extracting the lists
+            L1,L2 = bacte.division()
+            
+            # Noises
+            self.division_noise(L1,L2)
+            # L2.reverse()
+
+            # Creation of the daughters
+            D1 = bact.Bacterium(N=len(L1),Disks=L1,l=self.rest_spring_l,t_i=self.time,gm=self.disk_add_method,
+                growth_k=self.k,color=bacte.color)
+            D2 = bact.Bacterium(N=len(L2),Disks=L2,l=self.rest_spring_l,t_i=self.time,gm=self.disk_add_method,
+                growth_k=self.k,color=bacte.color)
+            
+            # Deleting the mother
+            self.bacteria.remove(bacte)
+            self.N -=1
+
+            #Adding the daughter
+            self.bacteria.append(D1)
+            self.N +=1
+            self.bacteria.append(D2)
+            self.N +=1
+
+    def division_noise(self,L1:list[disk.Disk],L2 : list[disk.Disk]):
+        """ Add angular noise to the lists of disks after division"""
+
+        # Noises
+        dtheta1 = random.uniform(-self.theta/2,self.theta/2)
+        dtheta2 = -dtheta1
+
+        # Length of the lists
+        l1= len(L1)
+        l2= len(L2)
+
+        # Rotation matrix
+        M1 = np.array(([np.cos(dtheta1),-np.sin(dtheta1)],[np.sin(dtheta1),np.cos(dtheta1)]))
+        M2 = np.array(([np.cos(dtheta2),-np.sin(dtheta2)],[np.sin(dtheta2),np.cos(dtheta2)]))
+
+        # Rotation centers 
+        if l1%2==0:
+            rc1 = np.array([(L1[l1//2].X[0]+L1[l1//2+1].X[0])/2,(L1[l1//2].X[1]+L1[l1//2+1].X[1])/2])
+        else:
+            rc1 = L1[l1//2]
+        
+        if l2%2==0:
+            rc2 = np.array([(L2[l2//2].X[0]+L2[l2//2+1].X[0])/2,(L2[l2//2].X[1]+L2[l2//2+1].X[1])/2])
+        else:
+            rc2 = L1[l2//2]
+        
+        # Rotations
+        for j in range(0,max(l1,l2)):
+            if j <l1 and (l1%2==0 and j!=l1//2):
+                L1[j].X = np.dot(M1,L1[j].X  - rc1 )+ rc1
+                # if(L1[j].X[1] - rc1[1]<0):
+                #     L1[j].X[0] = rc1[0] + norm(L1[j].X - rc1)*np.cos(dtheta1)
+                #     L1[j].X[1] = rc1[1] + norm(L1[j].X - rc1)*np.sin(dtheta1)
+                # else :
+                #     L1[j].X[0] = rc1[0] + norm(L1[j].X - rc1)*np.cos(dtheta1)
+                #     L1[j].X[1] = rc1[1] + norm(L1[j].X - rc1)*np.sin(dtheta1)
+                    
+            if j <l2 and (l2%2==0 and j!=l2//2):
+                L2[j].X = np.dot(M2,L2[j].X  - rc2 )+ rc2
+                
+    ### ----------------- All Processes ------------------
 
     def bacteria_processes(self):
         """ Apply all the processes of the bacteria """
 
-        for bact in self.bacteria:
+        for i in range(0,self.N):
+            bact = self.bacteria[i]
+
             # Calculation of the velocity
             bact.spring_velocity()
 
@@ -249,8 +328,11 @@ class Model:
 
             # Bacterium growth
             # bact.growth(self.time,self.disk_add_method)
-            bact.growth(self.time,bact.growth_method)
-    
+            bact.growth(self.time,bact.growth_method,self.max_disks)
+
+            #Bacterium division
+            self.division(i,bact)
+            
     ### ----------------- Simulation informations updaters ---------------
     def N_bacteria(self):
         """Update the number of bacteria"""
