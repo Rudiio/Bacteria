@@ -27,16 +27,18 @@ class Application(model.Model):
     - axis origin (y-axis is reverted)"""
 
     def __init__(self):
-        """Constructor for the display/tkinter class"""
+        """Constructor for the display/pygame class"""
         #Creation of the window/tk object
         pygame.init()
         model.Model.__init__(self)
         
         """Model parameters"""
         # self.generate_bacterium()
+
+        # To generate a lot of random bacteria with the same size
         for i in range(0,1):
-            # self.generate_random_bacterium_no_collision(5)
-            self.generate_random_bacteria(1)
+            self.generate_random_bacterium_no_collision(10)
+            # self.generate_random_bacteria(1)
         
         # self.generate_random_bacterium_no_collision_method(1,1)
         # self.generate_random_bacterium_no_collision_method(1,2)
@@ -44,11 +46,15 @@ class Application(model.Model):
         # self.generate_random_bacterium_no_collision_method(1,4)
         # self.generate_random_bacterium_no_collision_method(1,5)
 
+        # To generate disk-bacteria with different growing method
         # self.gen_cell_pos(3,5,1)
         # self.gen_cell_pos(6,5,2)
         # self.gen_cell_pos(9,5,3)
         # self.gen_cell_pos(12,5,4)
         # self.gen_cell_pos(15,5,5)
+
+        #  To generate a random bacterium of a certain size
+        # self.generate_random_bacterium_no_collision(7)
 
         """Display parameters"""
         #Size of the window 
@@ -110,7 +116,7 @@ class Application(model.Model):
 
             # Updating the screen
             pygame.display.flip()
-            pygame.time.delay(10)
+            # pygame.time.delay(20)
     
     ### ------------------ Drawing methods ----------------------------------###
 

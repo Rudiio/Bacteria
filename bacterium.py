@@ -1,3 +1,4 @@
+from turtle import back
 import numpy as np
 from pyparsing import NoMatch
 from scipy import rand
@@ -35,11 +36,14 @@ class Bacterium:
         self.t_i = t_i    # time of the last addition
         self.max_disks = 20 # Number maximal of disk contained by a bacterium
 
-        # softening parameter (to avoird division by zero)
+        # softening parameter (to avoid division by zero)
         self.eps = 0.0001 
 
-        #Growth method
+        # Growth method
         self.growth_method = gm
+
+        # Collision constant
+        self.kc = 0.1
 
     def __str__(self):
         """Display the bacterium informations whit the print function"""
@@ -60,15 +64,16 @@ class Bacterium:
 
     ###-----------------  Velocity calculation -----------------------
 
-    def spring_velocity(self):
+    def spring_velocity(self,ci,bacteria , ):
         """Calculate the velocity that comes from the spring forces/torques
         of each cell of the bacterium"""
 
         # Loop on all the Disks
-        if(self.p_i>1):
-            for k in range(self.p_i):
-                # print(self.torsion_spring_par(k))
+        for k in range(self.p_i):
+            # print(self.torsion_spring_par(k))
+            if(self.p_i >1):
                 self.Disks[k].V = self.linear_spring(k) + self.torsion_spring_par(k) +self.torsion_spring_bot(k)
+            self.non_overlapping(ci,bacteria,k)
 
     def linear_spring(self,k):
         """Calculates the velocity created by the linear springs"""
@@ -272,6 +277,32 @@ class Bacterium:
         
         return V
 
+    def non_overlapping(self,ci :int,bacteria, j ):
+        """Calculate the non-overlapping forces for all the disk of a bacterium
+        toward the other disks of the bacteria of the simulation"""
+
+        N = len(bacteria)
+
+        # Current disk
+        Xj = self.Disks[j].X
+
+        # Itering on the bacteria
+        for i in range(ci+1,N):
+            cbact = bacteria[i]
+            p_i = cbact.p_i
+
+            # Itering on the disks
+            for l in range(0,p_i):
+                Xl = cbact.Disks[l].X
+                
+                # if(i==ci and l==j):
+                #     v=0
+                # checking the overlapping condition
+                if(norm(Xj - Xl) <= 2*self.Disks[0].radius):
+                    v = self.kc/((2*self.Disks[0].radius)**2)*(1-(2*self.Disks[0].radius)/(norm(Xj-Xl)+self.eps))*(Xj-Xl)
+                    self.Disks[j].V -= v
+                    bacteria[i].Disks[l].V += v
+
     ###------------------ Model bacterium processes -------------------------
     
     ## GROWTH
@@ -300,11 +331,11 @@ class Bacterium:
             
             # One side equilibrum
             elif method==4:
-                self.add_disk42()
+                self.add_disk4()
             
             # Two sides equilibrum
             elif method==5:
-                self.add_disk52()
+                self.add_disk5()
 
     def add_disk1(self):
         """Add a new disk is added not at equilibrum into the bacterium on one side of the bacterium
@@ -453,7 +484,7 @@ class Bacterium:
                     
             self.p_i +=1
 
-    def add_disk4(self):
+    def add_disk42(self):
         """Add a new disk at equilibrum into the bacterium on one side of the bacterium
         chosen randomly"""
         side = random.random()
@@ -501,7 +532,7 @@ class Bacterium:
         # Updating the number of disks
         self.p_i +=1
     
-    def add_disk42(self):
+    def add_disk4(self):
         """Add a new disk is added not at equilibrum into the bacterium on one side of the bacterium
         chosen randomly"""
         
@@ -552,7 +583,7 @@ class Bacterium:
         # Updating the number of disks
         self.p_i +=1
 
-    def add_disk5(self):
+    def add_disk52(self):
         """Add a new disk at equilibrum into the bacterium on both side of the bacterium"""
         alpha = 0
 
@@ -584,7 +615,7 @@ class Bacterium:
         # Updating the number of disks
         self.p_i +=1
 
-    def add_disk52(self):
+    def add_disk5(self):
         """Add a new disk not at equilibrum into the bacterium on both side of the bacterium"""
 
         # the disk is added in the head

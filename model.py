@@ -19,7 +19,7 @@ class Model:
         #Creation of the list of bacteria
         
         # Simulation parameters
-        self.disk_add_method = 4 # decide the position of the new disk
+        self.disk_add_method =  2 # decide the position of the new disk
         self.dt = 0.5
         self.time = 0
 
@@ -31,7 +31,8 @@ class Model:
         self.radius = 0.5
 
         # Growth parameters
-        self.k = 0.01 # 0.001    # Growth constant
+        self.k = 0.01 #0.025 # 0.001    # Growth constant
+        self.max_length = 10
         self.max_disks = 20 #1/(self.k*self.dt)
 
         # print(self.max_disks)
@@ -238,7 +239,6 @@ class Model:
         for b in bact:
             for d in b.Disks:
                 if( norm(X - d.X ) <= 2*d.radius):
-                    print("test")
                     return True
         return False
                 
@@ -254,13 +254,17 @@ class Model:
             
             # Noises
             self.division_noise(L1,L2)
+
+            # Oppose the direction of the daughters
             # L2.reverse()
 
             # Creation of the daughters
+            color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
             D1 = bact.Bacterium(N=len(L1),Disks=L1,l=self.rest_spring_l,t_i=self.time,gm=self.disk_add_method,
-                growth_k=self.k,color=bacte.color)
+                growth_k=self.k,color=color)
+            color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
             D2 = bact.Bacterium(N=len(L2),Disks=L2,l=self.rest_spring_l,t_i=self.time,gm=self.disk_add_method,
-                growth_k=self.k,color=bacte.color)
+                growth_k=self.k,color=color)
             
             # Deleting the mother
             self.bacteria.remove(bacte)
@@ -276,7 +280,8 @@ class Model:
         """ Add angular noise to the lists of disks after division"""
 
         # Noises
-        dtheta1 = random.uniform(-self.theta/2,self.theta/2)
+        theta = 1.e-1 #np.pi/2 #1.e-1
+        dtheta1 = random.uniform(-theta/2,theta/2)
         dtheta2 = -dtheta1
 
         # Length of the lists
@@ -291,25 +296,18 @@ class Model:
         if l1%2==0:
             rc1 = np.array([(L1[l1//2].X[0]+L1[l1//2+1].X[0])/2,(L1[l1//2].X[1]+L1[l1//2+1].X[1])/2])
         else:
-            rc1 = L1[l1//2]
+            rc1 = L1[l1//2].X
         
         if l2%2==0:
             rc2 = np.array([(L2[l2//2].X[0]+L2[l2//2+1].X[0])/2,(L2[l2//2].X[1]+L2[l2//2+1].X[1])/2])
         else:
-            rc2 = L1[l2//2]
+            rc2 = L2[l2//2].X
         
         # Rotations
         for j in range(0,max(l1,l2)):
-            if j <l1 and (l1%2==0 and j!=l1//2):
+            if j<l1 or (l1%2==0 and j!=l1//2 and j<l1):
                 L1[j].X = np.dot(M1,L1[j].X  - rc1 )+ rc1
-                # if(L1[j].X[1] - rc1[1]<0):
-                #     L1[j].X[0] = rc1[0] + norm(L1[j].X - rc1)*np.cos(dtheta1)
-                #     L1[j].X[1] = rc1[1] + norm(L1[j].X - rc1)*np.sin(dtheta1)
-                # else :
-                #     L1[j].X[0] = rc1[0] + norm(L1[j].X - rc1)*np.cos(dtheta1)
-                #     L1[j].X[1] = rc1[1] + norm(L1[j].X - rc1)*np.sin(dtheta1)
-                    
-            if j <l2 and (l2%2==0 and j!=l2//2):
+            if j<l2 or (l2%2==0 and j!=l2//2 and j<l2):
                 L2[j].X = np.dot(M2,L2[j].X  - rc2 )+ rc2
                 
     ### ----------------- All Processes ------------------
@@ -321,9 +319,10 @@ class Model:
             bact = self.bacteria[i]
 
             # Calculation of the velocity
-            bact.spring_velocity()
+            bact.spring_velocity(i,self.bacteria)
 
-            # Numerical intergration
+        for bact in self.bacteria:
+            # Numerical integration
             bact.Euler_explicit(self.dt)
 
             # Bacterium growth
