@@ -69,7 +69,7 @@ class Application(model.Model):
 
         #Micrometer to pixels conversion
         self.graduation = 1     # graduation in micrometers
-        self.convert = 50 # pixel length of a graduation
+        self.convert = 35 # pixel length of a graduation
 
         #axis offset from the side of the window
         self.axis_origin = 30
@@ -89,7 +89,7 @@ class Application(model.Model):
 
     def mainloop(self):
         """Main loop of the application/simulation"""
-
+        pygame.time.delay(5000)
         while self.running :            
             # Events
             self.event()

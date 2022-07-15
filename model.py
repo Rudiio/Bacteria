@@ -19,7 +19,7 @@ class Model:
         #Creation of the list of bacteria
         
         # Simulation parameters
-        self.disk_add_method =  2 # decide the position of the new disk
+        self.disk_add_method =  4 # decide the position of the new disk
         self.dt = 0.5
         self.time = 0
 
