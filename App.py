@@ -89,7 +89,7 @@ class Application(model.Model):
 
     def mainloop(self):
         """Main loop of the application/simulation"""
-        pygame.time.delay(5000)
+        # pygame.time.delay(5000)
         while self.running :            
             # Events
             self.event()

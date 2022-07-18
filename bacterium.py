@@ -1,3 +1,4 @@
+from calendar import c
 from turtle import back
 import numpy as np
 from pyparsing import NoMatch
@@ -64,13 +65,12 @@ class Bacterium:
 
     ###-----------------  Velocity calculation -----------------------
 
-    def spring_velocity(self,ci,bacteria , ):
+    def spring_velocity(self,ci,bacteria):
         """Calculate the velocity that comes from the spring forces/torques
         of each cell of the bacterium"""
 
         # Loop on all the Disks
         for k in range(self.p_i):
-            # print(self.torsion_spring_par(k))
             if(self.p_i >1):
                 self.Disks[k].V = self.linear_spring(k) + self.torsion_spring_par(k) +self.torsion_spring_bot(k)
             self.non_overlapping(ci,bacteria,k)
@@ -277,7 +277,7 @@ class Bacterium:
         
         return V
 
-    def non_overlapping(self,ci :int,bacteria, j ):
+    def non_overlapping(self,ci :int,bacteria, j):
         """Calculate the non-overlapping forces for all the disk of a bacterium
         toward the other disks of the bacteria of the simulation"""
 
@@ -287,21 +287,33 @@ class Bacterium:
         Xj = self.Disks[j].X
 
         # Itering on the bacteria
-        for i in range(ci+1,N):
+        for i in range(0,N):
             cbact = bacteria[i]
             p_i = cbact.p_i
 
+            # if(i==ci):
+            #     for l in range(0,p_i):
+            #         Xl = cbact.Disks[l].X
+                    
+            #         # checking the overlapping condition
+            #         if(norm(Xj - Xl) <= 2*self.Disks[0].radius and abs(l-j)>1):
+            #             v = self.kc/((2*self.Disks[0].radius)**2)*(1-(2*self.Disks[0].radius)/(norm(Xj-Xl)+self.eps))*(Xj-Xl)
+            #             self.Disks[j].V -= v
+            #             # bacteria[i].Disks[l].V += v
+
             # Itering on the disks
-            for l in range(0,p_i):
-                Xl = cbact.Disks[l].X
-                
-                # if(i==ci and l==j):
-                #     v=0
-                # checking the overlapping condition
-                if(norm(Xj - Xl) <= 2*self.Disks[0].radius):
-                    v = self.kc/((2*self.Disks[0].radius)**2)*(1-(2*self.Disks[0].radius)/(norm(Xj-Xl)+self.eps))*(Xj-Xl)
-                    self.Disks[j].V -= v
-                    bacteria[i].Disks[l].V += v
+            # else:
+            if(i!=ci):
+                for l in range(0,p_i):
+                    Xl = cbact.Disks[l].X
+                    
+                    # checking the overlapping condition
+                    if(norm(Xj - Xl) <= 2*self.Disks[0].radius):
+                        v = self.kc/((2*self.Disks[0].radius)**2)*(1-(2*self.Disks[0].radius)/(norm(Xj-Xl)+self.eps))*(Xj-Xl)
+                        self.Disks[j].V -= v
+
+                        # bacteria[i].Disks[l].vplus(v)
+                        # cbact.Disks[l].V += v
 
     ###------------------ Model bacterium processes -------------------------
     

@@ -54,22 +54,23 @@ class Model:
         # self.bacteria[0].Disks.append(disk3)
         # self.bacteria[0].p_i+=1
 
-        disk1 = disk.Disk(X=np.array([1,5]),mass=0.1,ray=self.radius)
-        self.bacteria = [bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,growth_k=self.k,color=(139,0,0))]
+        disk1 = disk.Disk(X=np.array([1,5]),mass=1,ray=self.radius)
+        self.bacteria = [bact.Bacterium(N=1,Disks=[disk1],l=self.radius,t_i = self.time,gm=self.disk_add_method,theta=self.theta,growth_k=self.k,color=(139,0,0))]
         self.N+=1
-        disk2 = disk.Disk(X=np.array([disk1.X[0]+self.bacteria[0].spring_rest_l+10,disk1.X[1]]),mass=0.1,ray=self.radius)
+        disk2 = disk.Disk(X=np.array([disk1.X[0]+self.bacteria[0].spring_rest_l,disk1.X[1]]),mass=1,ray=self.radius)
         self.bacteria[0].Disks.append(disk2)
         self.bacteria[0].p_i+=1
-        disk3 = disk.Disk(X=np.array([disk2.X[0]+self.bacteria[0].spring_rest_l,disk2.X[1]+5]),mass=0.1,ray=self.radius)
+        disk3 = disk.Disk(X=np.array([disk2.X[0]+self.bacteria[0].spring_rest_l,disk2.X[1]]),mass=1,ray=self.radius)
         self.bacteria[0].Disks.append(disk3)
         self.bacteria[0].p_i+=1
+        
 
-        disk1 = disk.Disk(X=np.array([4,7]),mass=0.1,ray=self.radius)
-        disk2 = disk.Disk(X=np.array([disk1.X[0],disk1.X[1]-self.rest_spring_l]),mass=0.1,ray=self.radius)
-        disk3 = disk.Disk(X=np.array([disk2.X[0],disk2.X[1]-self.rest_spring_l]),mass=0.1,ray=self.radius)
-        disk4 = disk.Disk(X=np.array([disk3.X[0]-self.rest_spring_l,disk3.X[1]]),mass=0.1,ray=self.radius)
-        disk5 = disk.Disk(X=np.array([disk4.X[0]-self.rest_spring_l,disk4.X[1]]),mass=0.1,ray=self.radius)
-        self.bacteria.append (bact.Bacterium(N=5,Disks=[disk1,disk2,disk3,disk4,disk5],l=self.rest_spring_l,theta=self.theta,growth_k=self.k,color=(0,128,0)))
+        disk1 = disk.Disk(X=np.array([3,5]),mass=0.1,ray=self.radius)
+        disk2 = disk.Disk(X=np.array([disk1.X[0]+self.rest_spring_l,disk1.X[1]]),mass=1,ray=self.radius)
+        disk3 = disk.Disk(X=np.array([disk2.X[0]+self.rest_spring_l,disk2.X[1]]),mass=1,ray=self.radius)
+        disk4 = disk.Disk(X=np.array([disk3.X[0]+self.rest_spring_l,disk3.X[1]]),mass=1,ray=self.radius)
+        disk5 = disk.Disk(X=np.array([disk4.X[0]+self.rest_spring_l,disk4.X[1]]),mass=1,ray=self.radius)
+        self.bacteria.append (bact.Bacterium(N=5,Disks=[disk1,disk2,disk3,disk4,disk5],l=self.radius,t_i = self.time,gm=self.disk_add_method,theta=self.theta,growth_k=self.k,color=(0,128,0)))
         
         # disk1 = disk.Disk(X=np.array([4,7]),mass=0.1,ray=self.radius)
         # self.bacteria.append (bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,color=(0,128,0)))
@@ -90,8 +91,8 @@ class Model:
         d = 4*self.radius #disks distance
 
         #Generation of the head
-        x1 = random.uniform(5,15)
-        x2 = random. uniform(5,15)
+        x1 = 5
+        x2 = 5
         X = np.array([x1,x2])
         disks.append(disk.Disk(X,ray=self.radius))
 
@@ -314,7 +315,7 @@ class Model:
 
     def bacteria_processes(self):
         """ Apply all the processes of the bacteria """
-
+        
         for i in range(0,self.N):
             bact = self.bacteria[i]
 

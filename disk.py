@@ -19,6 +19,9 @@ class Disk:
     def __str__(self):
         """Display the Disks information with the print fuction"""
         return (f"Center = {self.X}, Velocity = {self.V}, mass = {self.mass} ")
+    def vplus(self,v):
+        """Modify the velocity of the bacterium"""
+        self.V += v
         
 
 if __name__=="__main__":
