@@ -33,11 +33,11 @@ class Application(model.Model):
         model.Model.__init__(self)
         
         """Model parameters"""
-        # self.generate_bacterium()
+        self.generate_bacterium()
 
         # To generate a lot of random bacteria with the same size
-        for i in range(0,1):
-            self.generate_random_bacterium_no_collision(10)
+        # for i in range(0,1):
+        #     self.generate_random_bacterium_no_collision(10)
             # self.generate_random_bacteria(1)
         
         # self.generate_random_bacterium_no_collision_method(1,1)
