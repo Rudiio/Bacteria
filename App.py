@@ -11,6 +11,7 @@ import subprocess
 import os
 import datetime
 import random
+import matplotlib.pyplot as plt
 
 class Application(model.Model):
     """Class for handleling the graphical aspect and interface of the simulations
@@ -60,7 +61,7 @@ class Application(model.Model):
         #Size of the window 
         self.height = 600
         self.width = 1000
-        self.window = pygame.display.set_mode([self.width,self.height],pygame.RESIZABLE)
+        self.window = pygame.display.set_mode([self.width,self.height],pygame.SCALED)
         pygame.display.set_caption("Bacteria micro-colonies simulator")
         self.black =  (0,0,0)
 
@@ -117,6 +118,7 @@ class Application(model.Model):
             # Updating the screen
             pygame.display.flip()
             # pygame.time.delay(20)
+        pygame.quit()
     
     ### ------------------ Drawing methods ----------------------------------###
 
@@ -298,6 +300,8 @@ class Application(model.Model):
             x4 = [p_x_next + p_ray*np.cos(alpha2),p_y_next + p_ray*np.sin(alpha2)]
             
             #drawing the lines
+            # pygame.draw.line(self.window,(0,0,0),x1,x4,width=2)
+            # pygame.draw.line(self.window,(0,0,0),x2,x3,width=2)
             pygame.draw.line(self.window,bact.color,x1,x4)
             pygame.draw.line(self.window,bact.color,x2,x3)
 
@@ -310,6 +314,10 @@ class Application(model.Model):
         # Points du dessous
         y = np.zeros((bact.p_i,2))
         y_next = np.zeros((bact.p_i,2))
+
+        #  Listes 
+        L_above =[]
+        L_under = []
 
         #ray offset
         ray_offset = 0
@@ -356,13 +364,36 @@ class Application(model.Model):
             #drawing the lines
             pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
             pygame.draw.polygon(self.window,bact.color,[x1,x4,x3,x2])
+            L_above.append(x1)
+            L_above.append(x4)
+            L_under.append(x2)
+            L_under.append(x3)
+
 
         cdisk = bact.Disks[bact.p_i -1] #Current disk
+
         #converting the positions from micrometers to pixels
         p_x = (cdisk.X[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
         p_y = self.height - (cdisk.X[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
         p_ray = cdisk.radius*self.convert/self.graduation + ray_offset
         pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
+
+        # Drawing a consistant hull
+
+        self.draw_hull(L_above,L_under,bact.points())
+
+    def draw_hull(self,L_above,L_under,disks_points):
+        """Draw the hull of a bacteria from two lists of points"""
+        la = len(L_above)
+        lu = len(L_under)
+        # x = np.linspace(0,1,10)
+        # plt.plot(x,x)
+        # plt.show()
+        for i in range(0,max(la-1,lu-1)):
+            if(i<la-1):
+                pygame.draw.line(self.window,self.black,L_above[i],L_above[i+1],width=1)
+            if(i<lu-1):
+                pygame.draw.line(self.window,self.black,L_under[i],L_under[i+1],width=1)
 
     ### ----------------------- Events methods ---------------------------------------
 
@@ -489,4 +520,3 @@ class Application(model.Model):
 if __name__=="__main__":
     app = Application()
     app.mainloop()
-    pygame.quit()

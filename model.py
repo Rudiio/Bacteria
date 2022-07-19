@@ -19,7 +19,7 @@ class Model:
         #Creation of the list of bacteria
         
         # Simulation parameters
-        self.disk_add_method =  3 # decide the position of the new disk
+        self.disk_add_method =  4 # decide the position of the new disk
         self.dt = 0.5
         self.time = 0
 
@@ -65,7 +65,7 @@ class Model:
         # self.bacteria[0].p_i+=1
         
 
-        disk1 = disk.Disk(X=np.array([3,5]),mass=1,ray=self.radius)
+        disk1 = disk.Disk(X=np.array([2,5]),mass=1,ray=self.radius)
         disk2 = disk.Disk(X=np.array([disk1.X[0]+self.rest_spring_l,disk1.X[1]]),mass=1,ray=self.radius)
         disk3 = disk.Disk(X=np.array([disk2.X[0]+self.rest_spring_l,disk2.X[1]]),mass=1,ray=self.radius)
         disk4 = disk.Disk(X=np.array([disk3.X[0]+self.rest_spring_l,disk3.X[1]]),mass=1,ray=self.radius)

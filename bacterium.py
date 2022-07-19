@@ -63,6 +63,13 @@ class Bacterium:
         else:
             return np.zeros(1)
 
+    def points(self):
+        """Returns an array of the points of the bacterium"""
+        P =[]
+        for p in self.Disks:
+            P.append([p.X[0],p.X[1]])
+        return P
+
     ###-----------------  Velocity calculation -----------------------
 
     def spring_velocity(self,ci,bacteria):

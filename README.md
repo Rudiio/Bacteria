@@ -7,25 +7,48 @@
 This project consist in modeling the morphogenesis of micro-colonies of bacteria that support bending.
 
 ## Model presentation
+
 In our model, a bacteria is constitued of a chain of disks linked by springs.
 - This implies that the disks are subject to linear spring forces that controls the springs length and to torsion spring forces that control the angles of system of 3 disks. 
 
+- Non overlapping forces are implemented as elactic collision interaction between two disks that are near enough.
+
 - Exponential growth of the bacteria are also implemented.
+
+- When the bacteria lengths reach a threshold, the bacteria divide themselves into two daugthters.
+
+We use an energy based approach to calculate the velocity of each disks and then integrate Newton's equation of motion.
 
 ![model](https://github.com/Rudiio/Images-factory/blob/main/model.png)
 
-## Simulation dimensions
+## Simulation parameters
 
-The dimension for a bacteria is around 10 micrometers. On the display, it is possible to change the scale micrometer/pixel, but it is natively fixed to 1 um = 40 p
+The data notebook extracts the numerical parameters from datasets of experimental bacteria (Coli or Pseudomonas).
+Distributions of the parameters are made to understand the simulations parameters and to compare the results.
+
+Here are the studied parameters:
+- **cname** : the name of a bacteria
+- **frame** : the frame during wich the bacteria was observed.
+- **time** : the time of the observation
+- **cellno** : the number of the cell on the current frame
+- **schnitzno** : the "id" of a bacterium
+- **birth** : the birth date
+- **lifespan** : lifetime of a bacterium before division
+- **area** : area of the bacterium
+- **lentgh** :
+- **angle**:
+- **grate** : growth rate of the bacterium
+- **width** 
 
 
 ## Commands
+
 - **A** : show/hide the axises
 - **K** : zoom
 - **L** : dezoom
-- **p** : take a screenshot
-- **z** : generate a random bacterium
-- **r** : change the display mode of the bacteria
+- **P** : take a screenshot
+- **Z** : generate a random bacterium
+- **R** : change the display mode of the bacteria
 - **← → ↑ ↓** : movements (change the origin)
 
 ## TODO
@@ -40,9 +63,9 @@ The dimension for a bacteria is around 10 micrometers. On the display, it is pos
 - [ ] external interactions
 - [ ] bacteria movement
 
-## Dependencies
+## Install
 
-The program relies on the pygame API for the graphical interface and on Numpy for the arrays and vector computations. There is also a version using Tkinter but it not complete.
+The program relies on the pygame API for the graphical interface and on Numpy for the arrays and vector computations.
 
 To install pygame (with pip package manager)
 
@@ -51,6 +74,7 @@ To install pygame (with pip package manager)
 To install Numpy (with pip package manager)
 
 ``` pip install numpy ```
+
 
 ## Simulations
 
