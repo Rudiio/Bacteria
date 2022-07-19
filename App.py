@@ -69,7 +69,7 @@ class Application(model.Model):
         self.running = True
 
         #Micrometer to pixels conversion
-        self.graduation = 1     # graduation in micrometers
+        self.graduation = 5     # graduation in micrometers
         self.convert = 35 # pixel length of a graduation
 
         #axis offset from the side of the window
@@ -380,7 +380,7 @@ class Application(model.Model):
 
         # Drawing a consistant hull
 
-        self.draw_hull(L_above,L_under,bact.points())
+        # self.draw_hull(L_above,L_under,bact.points())
 
     def draw_hull(self,L_above,L_under,disks_points):
         """Draw the hull of a bacteria from two lists of points"""
@@ -389,11 +389,16 @@ class Application(model.Model):
         # x = np.linspace(0,1,10)
         # plt.plot(x,x)
         # plt.show()
-        for i in range(0,max(la-1,lu-1)):
-            if(i<la-1):
-                pygame.draw.line(self.window,self.black,L_above[i],L_above[i+1],width=1)
-            if(i<lu-1):
-                pygame.draw.line(self.window,self.black,L_under[i],L_under[i+1],width=1)
+        i=0
+        k=0
+        for j in range(1,max(la-1,lu-1)):
+            # X = np.array(disks_points[j])
+            if(j<la-1):
+                pygame.draw.line(self.window,self.black,L_above[i],L_above[j],width=1)
+                i+=1
+            if(j<lu-1):
+                pygame.draw.line(self.window,self.black,L_under[k],L_under[j],width=1)
+                k+=1
 
     ### ----------------------- Events methods ---------------------------------------
 

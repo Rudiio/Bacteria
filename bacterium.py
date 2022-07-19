@@ -24,6 +24,9 @@ class Bacterium:
         self.Disks = Disks  # List of disks
         self.color = color  # disks colors
 
+        # bacteria length
+        self.L = self.get_length()
+
         # Springs parameters
         self.theta = theta  # Rest torque
         self.spring_rest_l = l  # Rest length
@@ -46,6 +49,8 @@ class Bacterium:
         # Collision constant
         self.kc = 0.1
 
+
+
     def __str__(self):
         """Display the bacterium informations whit the print function"""
         print(f"N = {self.p_i}")
@@ -62,6 +67,10 @@ class Bacterium:
             return L
         else:
             return np.zeros(1)
+
+    def get_length(self):
+        """Returns the length of a bacterium"""
+        return self.get_segment_length().sum()
 
     def points(self):
         """Returns an array of the points of the bacterium"""
