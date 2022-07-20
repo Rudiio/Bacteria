@@ -1,7 +1,5 @@
 from calendar import c
-from turtle import back
 import numpy as np
-from pyparsing import NoMatch
 from scipy import rand
 import disk 
 from numpy.linalg import norm
@@ -16,7 +14,7 @@ class Bacterium:
     - the rest length of the springs l 
     - the stiffness constants ks,kt1, kt2"""
 
-    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi,t_i = 0,gm=1,growth_k = 0.01, color = (0,0,0)):
+    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi,t_i = 0,gm=1,growth_k = 0.01,gen=1, color = (0,0,0)):
         """Constructor for the class Bacterium"""
 
         # Disks variables
@@ -24,16 +22,19 @@ class Bacterium:
         self.Disks = Disks  # List of disks
         self.color = color  # disks colors
 
+        # Generation 
+        self.gen = gen
         # bacteria length
-        self.L = self.get_length()
+        self.L = 1
+        self.update_length()
 
         # Springs parameters
         self.theta = theta  # Rest torque
         self.spring_rest_l = l  # Rest length
 
-        self.ks = 1.e-2 # Springs linear stiffness
-        self.kt_par = 1.e-2 # Springs torsion parallel stiffness
-        self.kt_bot = 1.e-2 # Springs torsion bot stiffness
+        self.ks = 1 # Springs linear stiffness
+        self.kt_par = 1 # Springs torsion parallel stiffness
+        self.kt_bot = 1 # Springs torsion bot stiffness
 
         # Growth variable
         self.k = growth_k    # Growth constant
@@ -47,9 +48,7 @@ class Bacterium:
         self.growth_method = gm
 
         # Collision constant
-        self.kc = 0.1
-
-
+        self.kc = 10
 
     def __str__(self):
         """Display the bacterium informations whit the print function"""
@@ -66,11 +65,11 @@ class Bacterium:
                 L[i] = norm(self.Disks[i].X - self.Disks[i+1].X)
             return L
         else:
-            return np.zeros(1)
+            return np.zeros(0)
 
-    def get_length(self):
+    def update_length(self):
         """Returns the length of a bacterium"""
-        return self.get_segment_length().sum()
+        self.L = self.get_segment_length().sum()
 
     def points(self):
         """Returns an array of the points of the bacterium"""
@@ -334,14 +333,19 @@ class Bacterium:
     ###------------------ Model bacterium processes -------------------------
     
     ## GROWTH
-    def growth(self,t,method,max_disks):
+    def growth(self,t,method,max_length):
         """ Handle the growth proccess of thre bacterium 
         add a new disk if t_i > t. The position of the new bacteria depends on method"""
 
         rate_i = 1/(self.k*self.p_i) 
+
+        #updating the length of the bacteria
+        self.update_length()
+
         if(method==2 or method==5):
             rate_i = 2/(self.k*self.p_i) 
-        if( t - self.t_i >= rate_i and self.p_i < max_disks):
+
+        if( t - self.t_i >= rate_i and self.L< max_length and self.p_i <self.max_disks):
             # Saving the moment we added a new disk
             self.t_i = rate_i + self.t_i
             

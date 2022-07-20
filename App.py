@@ -32,8 +32,36 @@ class Application(model.Model):
         #Creation of the window/tk object
         pygame.init()
         model.Model.__init__(self)
-        
+
+        """Display parameters"""
+        #Size of the window 
+        self.height = 600
+        self.width = 1000
+        self.window = pygame.display.set_mode([self.width,self.height],pygame.SCALED)
+        pygame.display.set_caption("Bacteria micro-colonies simulator")
+        self.black =  (0,0,0)
+
+        #Running state 
+        self.running = True
+
+        #Micrometer to pixels conversion
+        self.graduation = 3     # graduation in micrometers
+        self.convert = 50 # pixel length of a graduation
+
+        #axis offset from the side of the window
+        self.axis_origin = 30
+
+        #axis origin (to handle the movements)   
+        self.x_origin = -1
+        self.y_origin = -1
+
+        #Drawing the axis
+        self.axis_state = True
+        self.zoom_state = 1 #zoom and dezoom state
+
         """Model parameters"""
+        #Drawing the bacteria
+
         self.generate_bacterium()
 
         # To generate a lot of random bacteria with the same size
@@ -57,41 +85,17 @@ class Application(model.Model):
         #  To generate a random bacterium of a certain size
         # self.generate_random_bacterium_no_collision(7)
 
-        """Display parameters"""
-        #Size of the window 
-        self.height = 600
-        self.width = 1000
-        self.window = pygame.display.set_mode([self.width,self.height],pygame.SCALED)
-        pygame.display.set_caption("Bacteria micro-colonies simulator")
-        self.black =  (0,0,0)
-
-        #Running state 
-        self.running = True
-
-        #Micrometer to pixels conversion
-        self.graduation = 5     # graduation in micrometers
-        self.convert = 35 # pixel length of a graduation
-
-        #axis offset from the side of the window
-        self.axis_origin = 30
-
-        #axis origin (to handle the movements)   
-        self.x_origin = -1
-        self.y_origin = -1
-
-        #Drawing the axis
-        self.axis_state = True
-        self.zoom_state = 1 #zoom and dezoom state
-        self.draw_axis()
-
-        #Drawing the bacteria
         self.drawing_bacteria_state=1
+
+        # Initial drawings
+        self.autoscale(1)
+        self.draw_axis()
         self.draw_bacteria()
 
     def mainloop(self):
         """Main loop of the application/simulation"""
         # pygame.time.delay(5000)
-        while self.running :            
+        while self.running and self.time <= self.tmax :            
             # Events
             self.event()
 
@@ -134,10 +138,14 @@ class Application(model.Model):
         self.font = pygame.font.SysFont("msreferencesansserif",11)
 
         #x-axis
+        # pygame.draw.line(self.window,(0,0,0),start_pos=[self.axis_origin,self.height-self.axis_origin],end_pos=[-2*self.x_origin*self.convert/self.graduation + self.axis_origin ,
+        #                         self.height-self.axis_origin],width=1)
+
         pygame.draw.line(self.window,(0,0,0),start_pos=[self.axis_origin,self.height-self.axis_origin],end_pos=[((self.width-self.axis_origin)//self.convert)*self.convert + self.axis_origin ,
                                 self.height-self.axis_origin],width=1)
-
         #y-axis
+        # pygame.draw.line(self.window,(0,0,0),start_pos=[self.axis_origin,self.height-self.axis_origin],end_pos=[self.axis_origin,
+        #                             self.height + 2*self.y_origin*self.convert/self.graduation - self.axis_origin],width=1)
         pygame.draw.line(self.window,(0,0,0),start_pos=[self.axis_origin,self.height-self.axis_origin],end_pos=[self.axis_origin,
                                     (self.height-self.axis_origin)-((self.height-self.axis_origin)//self.convert)*self.convert],width=1)
 
@@ -145,7 +153,7 @@ class Application(model.Model):
         xpos = self.axis_origin
         ypos = self.height - self.axis_origin
         i=0
-        while(xpos <= self.width):
+        while(xpos <= self.width ):#and int(self.x_origin + i*self.graduation)<= -self.x_origin):
             pygame.draw.line(self.window,(0,0,0),start_pos=[xpos,self.height-self.axis_origin],end_pos=[
                                     xpos,self.height-self.axis_origin+grad_width],width=1)
             if(self.graduation<1):
@@ -154,7 +162,7 @@ class Application(model.Model):
 
             else:
                 text = self.font.render(f"{int(self.x_origin + i*self.graduation)}",True,self.black)
-                number_offset = len(f"{self.x_origin + i*self.graduation}")
+                number_offset = len(f"{int(self.x_origin + i*self.graduation)}")
                 if(number_offset==1):
                     number_offset=0
                 self.window.blit(text,(xpos + grad_text_xoffset - number_offset*2,self.height-self.axis_origin+grad_width + grad_text_offset))
@@ -164,7 +172,7 @@ class Application(model.Model):
         i=0
         grad_text_offset = 17
         grad_text_xoffset = -8 
-        while(ypos > 0):
+        while(ypos > 0 ):#and  int(self.y_origin + i*self.graduation)<=-self.y_origin):
             pygame.draw.line(self.window,(0,0,0),start_pos=[self.axis_origin-grad_width,ypos],end_pos=[self.axis_origin,
                                     ypos],width=1)
             if(self.graduation<1):
@@ -239,13 +247,34 @@ class Application(model.Model):
         y+= distance
 
         # elapsed time
-        text = self.font.render(f"Elapsed time : {self.time}",True,self.black)
+        text = self.font.render(f"Elapsed time : {self.time:.2f} min",True,self.black)
         self.window.blit(text,(x,y))
         y+= distance
 
         # delta t
-        text = self.font.render(f"dt : {self.dt}",True,self.black)
+        text = self.font.render(f"dt : {self.dt} min",True,self.black)
         self.window.blit(text,(x,y))
+        y+= distance
+
+        # Radius
+        text = self.font.render(f"R : {self.radius} \u03BCm",True,self.black)
+        self.window.blit(text,(x,y))
+        y+= distance
+
+        # Growth method
+        text = self.font.render(f"Growth method : {self.disk_add_method}",True,self.black)
+        self.window.blit(text,(x,y))
+        y+= distance
+
+        # Growth rate
+        text = self.font.render(f"Growth rate : {self.k}",True,self.black)
+        self.window.blit(text,(x,y))
+        y+= distance
+
+        # division length
+        text = self.font.render(f"Div length : {self.max_length} \u03BCm",True,self.black)
+        self.window.blit(text,(x,y))
+        y+= distance
 
     def draw_bacterium_hull(self,bact : bact.Bacterium):
         """Draw the hull of the bacteria : spherocylinder"""
@@ -288,7 +317,7 @@ class Application(model.Model):
             alpha2 = alpha - np.pi/2
 
             #Calculation of the new points for  the current cell
-            x1 = np.array([p_x + p_ray*np.cos(alpha1),p_y + p_ray*np.sin(alpha1)])
+            x1 = np.array([p_x + (p_ray-1)*np.cos(alpha1),p_y + (p_ray-1)*np.sin(alpha1)])
             x2 = np.array([p_x + p_ray*np.cos(alpha2),p_y + p_ray*np.sin(alpha2)])
 
             # #Calculation of the new points for the next cell
@@ -297,7 +326,7 @@ class Application(model.Model):
             alpha2 = alpha - np.pi/2
     
             x3 = [p_x_next + p_ray*np.cos(alpha1),p_y_next + p_ray*np.sin(alpha1)]
-            x4 = [p_x_next + p_ray*np.cos(alpha2),p_y_next + p_ray*np.sin(alpha2)]
+            x4 = [p_x_next + (p_ray-1)*np.cos(alpha2),p_y_next + (p_ray-1)*np.sin(alpha2)]
             
             #drawing the lines
             # pygame.draw.line(self.window,(0,0,0),x1,x4,width=2)
@@ -350,16 +379,16 @@ class Application(model.Model):
             alpha2 = alpha - np.pi/2
 
             #Calculation of the new points for  the current cell
-            x1 = np.array([p_x + p_ray*np.cos(alpha1),p_y + p_ray*np.sin(alpha1)])
-            x2 = np.array([p_x + p_ray*np.cos(alpha2),p_y + p_ray*np.sin(alpha2)])
+            x1 = np.array([p_x + (p_ray-1)*np.cos(alpha1),p_y + (p_ray-1)*np.sin(alpha1)])
+            x2 = np.array([p_x + (p_ray-1)*np.cos(alpha2),p_y + (p_ray-1)*np.sin(alpha2)])
 
             # #Calculation of the new points for the next cell
             alpha = alpha - np.pi
             alpha1 = alpha + np.pi/2
             alpha2 = alpha - np.pi/2
 
-            x3 = [p_x_next + p_ray*np.cos(alpha1),p_y_next + p_ray*np.sin(alpha1)]
-            x4 = [p_x_next + p_ray*np.cos(alpha2),p_y_next + p_ray*np.sin(alpha2)]
+            x3 = [p_x_next + (p_ray-1)*np.cos(alpha1),p_y_next + (p_ray-1)*np.sin(alpha1)]
+            x4 = [p_x_next + (p_ray-1)*np.cos(alpha2),p_y_next + (p_ray-1)*np.sin(alpha2)]
             
             #drawing the lines
             pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
@@ -463,6 +492,10 @@ class Application(model.Model):
                     if event.key == pygame.K_DOWN:
                         self.y_origin -=self.graduation
                     
+                    # E to autoscale
+                    if event.key == pygame.K_e:
+                        self.autoscale(0)
+                        
                     # P to take a screenshot
                     if event.key == pygame.K_p:
                         e = datetime.datetime.now()
@@ -472,11 +505,11 @@ class Application(model.Model):
     def zoom(self):
         """Do a zoom"""
         if(1<self.zoom_state <=5):
-            if(self.zoom_state==1):
-                self.graduation = 1
-                self.convert = 40
-            elif(self.zoom_state==5):
-                self.graduation = 1
+            # if(self.zoom_state==1):
+            #     self.graduation = 1
+            #     self.convert = 40
+            if(self.zoom_state==5):
+                self.graduation = 5
                 self.convert = 25
             else:
                 self.convert += 5
@@ -490,9 +523,11 @@ class Application(model.Model):
                 self.convert += 5
             self.zoom_state -=1
 
-        elif(10<=self.zoom_state<=15):
-            self.convert += 5
-            self.zoom_state -=1
+        # elif(10<=self.zoom_state<=15):
+        #     self.convert += 5
+        #     self.zoom_state -=1
+        
+        self.autoscale(0)
 
     def dezoom(self):
         """Do a zoom"""
@@ -501,7 +536,7 @@ class Application(model.Model):
             self.convert -= 6
             self.zoom_state += 1
 
-        elif(5<=self.zoom_state<10):
+        elif(5<=self.zoom_state<9):
             if(self.zoom_state==5):
                 self.graduation = 10
                 self.convert = 50
@@ -509,17 +544,39 @@ class Application(model.Model):
                 self.convert -= 5
             self.zoom_state +=1
 
-        elif(10<=self.zoom_state<15):
-            if(self.zoom_state==10):
-                self.graduation = 100
-                self.convert = 50
-            else:
-                self.convert -= 5
-            self.zoom_state +=1
-    
+        # elif(10<=self.zoom_state<15):
+        #     if(self.zoom_state==10):
+        #         self.graduation = 100
+        #         self.convert = 50
+        #     else:
+        #         self.convert -= 5
+        #     self.zoom_state +=1
+        self.autoscale(0)
+
     def stop(self):
         """Close the window"""
         self.running=False
+
+    def autoscale(self,mode):
+        """Adapt the scaling and the camera to the first bacterium of the list"""
+        
+        # pcenter = np.array(self.bacteria[0].points())
+        # XC = np.array([pcenter[:,0].mean(),pcenter[:,1].mean()])
+        if mode==1:
+            # Calculating the new scale
+            if self.max_length/2 < 5:
+                self.graduation = 1
+            elif self.graduation/2 <10:
+                self.graduation = 5
+            elif self.graduation/2 < 20:
+                self.graduation = 10
+        
+        # Centering 
+        self.x_origin = (self.width/2-self.axis_origin)*self.graduation/self.convert
+        self.x_origin =-(self.x_origin - self.x_origin%5)
+        
+        self.y_origin = (self.height/2-self.axis_origin)*self.graduation/self.convert
+        self.y_origin =-(self.y_origin - self.y_origin%5)
 
         
 if __name__=="__main__":

@@ -19,10 +19,10 @@ class Model:
         #Creation of the list of bacteria
         
         # Simulation parameters
-        self.disk_add_method =  2 # decide the position of the new disk
-        self.dt = 0.5
-        self.time = 0
-
+        self.disk_add_method =  4 # decide the position of the new disk
+        self.dt = 0.1
+        self.time = 0.0
+        self.tmax = 150
         # Bacteria parameters and variables
         self.bacteria = []
         self.N= 0
@@ -30,9 +30,12 @@ class Model:
         # disks parameters
         self.radius = 2.15 #0.5
 
+        # Initial length
+        self.l_ini = 6.8
+
         # Growth parameters
-        self.k = 0.01 #0.025 # 0.001    # Growth constant
-        self.max_length = 10
+        self.k = 0.02843 #0.025 # 0.001    # Growth constant
+        self.max_length = 12.36     # division length
         self.max_disks = 20 #1/(self.k*self.dt)
 
         # print(self.max_disks)
@@ -65,16 +68,23 @@ class Model:
         # self.bacteria[0].p_i+=1
         
 
-        disk1 = disk.Disk(X=np.array([2,5]),mass=1,ray=self.radius)
-        disk2 = disk.Disk(X=np.array([disk1.X[0]+self.rest_spring_l,disk1.X[1]]),mass=1,ray=self.radius)
-        disk3 = disk.Disk(X=np.array([disk2.X[0]+self.rest_spring_l,disk2.X[1]]),mass=1,ray=self.radius)
-        disk4 = disk.Disk(X=np.array([disk3.X[0]+self.rest_spring_l,disk3.X[1]]),mass=1,ray=self.radius)
-        disk5 = disk.Disk(X=np.array([disk4.X[0]+self.rest_spring_l,disk4.X[1]]),mass=1,ray=self.radius)
-        self.bacteria.append (bact.Bacterium(N=5,Disks=[disk1,disk2,disk3,disk4,disk5],l=self.radius,t_i = self.time,gm=self.disk_add_method,theta=self.theta,growth_k=self.k,color=(0,128,0)))
+        # disk1 = disk.Disk(X=np.array([25,25]),mass=1,ray=self.radius)
+        # disk2 = disk.Disk(X=np.array([disk1.X[0]+self.rest_spring_l,disk1.X[1]]),mass=1,ray=self.radius)
+        # disk3 = disk.Disk(X=np.array([disk2.X[0]+self.rest_spring_l,disk2.X[1]]),mass=1,ray=self.radius)
+        # disk4 = disk.Disk(X=np.array([disk3.X[0]+self.rest_spring_l,disk3.X[1]]),mass=1,ray=self.radius)
+        # disk5 = disk.Disk(X=np.array([disk4.X[0]+self.rest_spring_l,disk4.X[1]]),mass=1,ray=self.radius)
+        # self.bacteria.append (bact.Bacterium(N=5,Disks=[disk1,disk2,disk3,disk4,disk5],l=self.radius,t_i = self.time,gm=self.disk_add_method,theta=self.theta,growth_k=self.k,color=(0,128,0)))
         
-        # disk1 = disk.Disk(X=np.array([4,7]),mass=0.1,ray=self.radius)
-        # self.bacteria.append (bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,color=(0,128,0)))
-        
+        l = 0
+        disk1 = disk.Disk(X=np.array([-self.l_ini/2,0]),mass=1,ray=self.radius)
+        D = [disk1]
+        i=0
+        while l<self.l_ini:
+            new_disk = disk.Disk(X=np.array([D[i].X[0]+self.rest_spring_l,D[i].X[1]]),mass=1,ray=self.radius)
+            D.append(new_disk)
+            l+=self.rest_spring_l
+            i+=1
+        self.bacteria.append(bact.Bacterium(N=len(D),Disks=D,l=self.radius,t_i = self.time,gm=self.disk_add_method,theta=self.theta,growth_k=self.k,color=(0,128,0)))
         self.N_bacteria()
 
     def gen_cell_pos(self,x,y,method):
@@ -249,7 +259,7 @@ class Model:
         Create two daughters bacteria"""
 
         # Checking if the bacterium should divide
-        if(bacte.p_i >= self.max_disks):
+        if(bacte.L >= self.max_length):
             # Extracting the lists
             L1,L2 = bacte.division()
             
@@ -262,10 +272,10 @@ class Model:
             # Creation of the daughters
             color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
             D1 = bact.Bacterium(N=len(L1),Disks=L1,l=self.rest_spring_l,t_i=self.time,gm=self.disk_add_method,
-                growth_k=self.k,color=color)
+                growth_k=self.k,gen=bacte.gen+1,color=color)
             color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
             D2 = bact.Bacterium(N=len(L2),Disks=L2,l=self.rest_spring_l,t_i=self.time,gm=self.disk_add_method,
-                growth_k=self.k,color=color)
+                growth_k=self.k,gen=bacte.gen+1,color=color)
             
             # Deleting the mother
             self.bacteria.remove(bacte)
@@ -295,12 +305,12 @@ class Model:
 
         # Rotation centers 
         if l1%2==0:
-            rc1 = np.array([(L1[l1//2].X[0]+L1[l1//2+1].X[0])/2,(L1[l1//2].X[1]+L1[l1//2+1].X[1])/2])
+            rc1 = np.array([(L1[l1//2].X[0]+L1[l1//2-1].X[0])/2,(L1[l1//2].X[1]+L1[l1//2-1].X[1])/2])
         else:
             rc1 = L1[l1//2].X
         
         if l2%2==0:
-            rc2 = np.array([(L2[l2//2].X[0]+L2[l2//2+1].X[0])/2,(L2[l2//2].X[1]+L2[l2//2+1].X[1])/2])
+            rc2 = np.array([(L2[l2//2].X[0]+L2[l2//2-1].X[0])/2,(L2[l2//2].X[1]+L2[l2//2-1].X[1])/2])
         else:
             rc2 = L2[l2//2].X
         
@@ -327,9 +337,9 @@ class Model:
             bact.Euler_explicit(self.dt)
 
             # Bacterium growth
-            # bact.growth(self.time,self.disk_add_method)
-            bact.growth(self.time,bact.growth_method,self.max_disks)
-
+            bact.growth(self.time,bact.growth_method,self.max_length)
+            bact.update_length()
+            
             #Bacterium division
             self.division(i,bact)
             
