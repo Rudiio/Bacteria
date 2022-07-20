@@ -1,9 +1,13 @@
-from calendar import c
-import numpy as np
-from scipy import rand
+# class
+import joblib
 import disk 
+
+# Calculations
+import numpy as np
 from numpy.linalg import norm
 import random
+
+# from joblib import Parallel,delayed
 
 class Bacterium:
     """ Class representing a bacterium 
@@ -80,9 +84,22 @@ class Bacterium:
 
     ###-----------------  Velocity calculation -----------------------
 
+    # def forces(self,k,ci,bacteria):
+    #     """ Calculates the velocity"""
+    #     v=np.zeros(2)
+    #     if(self.p_i >1):
+    #         v += self.linear_spring(k) + self.torsion_spring_par(k) +self.torsion_spring_bot(k)
+    #     v+=self.non_overlapping(ci,bacteria,k)
+    #     return v
+
     def spring_velocity(self,ci,bacteria):
         """Calculate the velocity that comes from the spring forces/torques
         of each cell of the bacterium"""
+
+        # n = Parallel(n_jobs=1)(delayed(self.forces)(k,ci,bacteria) for k in range(self.p_i))
+        # print(n)
+        # for k in range(self.p_i):
+        #     self.Disks[k].V =n[k]
 
         # Loop on all the Disks
         for k in range(self.p_i):
@@ -297,6 +314,7 @@ class Bacterium:
         toward the other disks of the bacteria of the simulation"""
 
         N = len(bacteria)
+        v=0
 
         # Current disk
         Xj = self.Disks[j].X
@@ -329,6 +347,7 @@ class Bacterium:
 
                         # bacteria[i].Disks[l].vplus(v)
                         # cbact.Disks[l].V += v
+        
 
     ###------------------ Model bacterium processes -------------------------
     

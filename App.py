@@ -1,17 +1,21 @@
 from os import environ
-from turtle import Turtle, width
+import os
+import datetime
+import matplotlib.pyplot as plt
+
+# Pygame
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
+
+# Calculations
 import numpy  as np
+from numpy.linalg import norm
+import random
+
+# Other classes
 import disk
 import bacterium as bact
 import model
-from numpy.linalg import norm
-import subprocess
-import os
-import datetime
-import random
-import matplotlib.pyplot as plt
 
 class Application(model.Model):
     """Class for handleling the graphical aspect and interface of the simulations
@@ -40,6 +44,8 @@ class Application(model.Model):
         self.window = pygame.display.set_mode([self.width,self.height],pygame.SCALED)
         pygame.display.set_caption("Bacteria micro-colonies simulator")
         self.black =  (0,0,0)
+        self.clock = pygame.time.Clock()
+        self.fps = 0
 
         #Running state 
         self.running = True
@@ -79,7 +85,7 @@ class Application(model.Model):
         # self.gen_cell_pos(3,5,1)
         # self.gen_cell_pos(6,5,2)
         # self.gen_cell_pos(9,5,3)
-        # self.gen_cell_pos(12,5,4)
+        # self.gen_cell_pos(0,0,4)
         # self.gen_cell_pos(15,5,5)
 
         #  To generate a random bacterium of a certain size
@@ -95,7 +101,13 @@ class Application(model.Model):
     def mainloop(self):
         """Main loop of the application/simulation"""
         # pygame.time.delay(5000)
-        while self.running and self.time <= self.tmax :            
+        while self.running and self.time <= self.tmax :     
+            # if(int(self.time)==70):
+            #     e = datetime.datetime.now()
+            #     pygame.image.save(self.window,"./screenshots/screenshot_" + "%s_%s_%s_" % (e.day, e.month, e.year) + "%s_%s_%s" % (e.hour, e.minute, e.second) + ".png")
+            #     print("> screenshot saved")
+
+            self.update_fps()    
             # Events
             self.event()
 
@@ -120,10 +132,15 @@ class Application(model.Model):
             self.increment_time()
 
             # Updating the screen
+            self.clock.tick()
             pygame.display.flip()
             # pygame.time.delay(20)
         pygame.quit()
     
+    def update_fps(self):
+        self.fps = str(int(self.clock.get_fps()))
+        
+
     ### ------------------ Drawing methods ----------------------------------###
 
     def draw_axis(self):
@@ -240,6 +257,11 @@ class Application(model.Model):
         x = self.width - 150
         y = 5
         distance = 20
+
+        # fps
+        text = self.font.render(f"fps : {self.fps}",True,self.black)
+        self.window.blit(text,(x,y))
+        y+= distance
 
         # Number of bacteria
         text = self.font.render(f"Number of bacteria : {self.N}",True,self.black)
@@ -495,7 +517,7 @@ class Application(model.Model):
                     # E to autoscale
                     if event.key == pygame.K_e:
                         self.autoscale(0)
-                        
+
                     # P to take a screenshot
                     if event.key == pygame.K_p:
                         e = datetime.datetime.now()

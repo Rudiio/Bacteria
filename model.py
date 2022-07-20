@@ -1,8 +1,14 @@
-import numpy as np
+
+# Classes
 import disk
 import bacterium as bact
+
+# Calculations
+import numpy as np
 import random
 from numpy.linalg import norm
+# from joblib import Parallel,delayed
+
 
 class Model:
     """Class for the modelisation
@@ -23,6 +29,7 @@ class Model:
         self.dt = 0.1
         self.time = 0.0
         self.tmax = 150
+
         # Bacteria parameters and variables
         self.bacteria = []
         self.N= 0
@@ -37,8 +44,6 @@ class Model:
         self.k = 0.02843 #0.025 # 0.001    # Growth constant
         self.max_length = 12.36     # division length
         self.max_disks = 20 #1/(self.k*self.dt)
-
-        # print(self.max_disks)
 
         # Springs parameters
         self.rest_spring_l = self.radius
@@ -254,7 +259,7 @@ class Model:
         return False
                 
     ### ---------------- Division -------------------------------
-    def division(self,i,bacte: bact.Bacterium):
+    def division(self,bacte: bact.Bacterium):
         """ Divide the bacterium if the maximum number of disks is reached.
         Create two daughters bacteria"""
 
@@ -323,14 +328,23 @@ class Model:
                 
     ### ----------------- All Processes ------------------
 
-    def bacteria_processes(self):
-        """ Apply all the processes of the bacteria """
-        
+    def interaction_calculation(self):
+        """ Calculate the intern and extern interactions of the bacteria wich modify the velocity
+        of  the disks"""
+
         for i in range(0,self.N):
             bact = self.bacteria[i]
 
             # Calculation of the velocity
             bact.spring_velocity(i,self.bacteria)
+
+    # def velocity_calculation(self,i):
+    #     self.bacteria[i].spring_velocity(i,self.bacteria)
+
+    def bacteria_processes(self):
+        """ Apply all the processes of the bacteria """
+        self.interaction_calculation()
+        # p = Parallel(n_jobs=-1)(delayed(self.velocity_calculation)(i) for i in range(self.N))
 
         for bact in self.bacteria:
             # Numerical integration
@@ -341,7 +355,7 @@ class Model:
             bact.update_length()
             
             #Bacterium division
-            self.division(i,bact)
+            self.division(bact)
             
     ### ----------------- Simulation informations updaters ---------------
     def N_bacteria(self):

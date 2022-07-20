@@ -46,6 +46,7 @@ Here are the studied parameters:
 - **A** : show/hide the axises
 - **K** : zoom
 - **L** : dezoom
+- **E** : Recenter
 - **P** : take a screenshot
 - **Z** : generate a random bacterium
 - **R** : change the display mode of the bacteria
@@ -56,12 +57,13 @@ Here are the studied parameters:
 - [X] drawing the case of the bacteria (needs improvements)
 - [X] compute spring/internal interactions
 - [X] external forces 
-- [ ] graphical improvement (auto scaling)
-- [ ] collision detection
-- [ ] growth
-- [ ] bacteria division
-- [ ] external interactions
-- [ ] bacteria movement
+- [X] graphical improvement (auto scaling)
+- [X] collision detection and interbacteria interactions
+- [ ] Calculation improvements
+- [X] growth
+- [X] bacteria division
+- [ ] In depth parameters study
+
 
 ## Install
 
