@@ -15,6 +15,8 @@ class Disk:
         self.V = V
         self.mass = mass
         self.radius = ray
+        self.next_bact = -1
+        self.next_disk = -1
 
     def __str__(self):
         """Display the Disks information with the print fuction"""

@@ -139,7 +139,6 @@ class Application(model.Model):
     
     def update_fps(self):
         self.fps = str(int(self.clock.get_fps()))
-        
 
     ### ------------------ Drawing methods ----------------------------------###
 
@@ -274,7 +273,7 @@ class Application(model.Model):
         y+= distance
 
         # delta t
-        text = self.font.render(f"dt : {self.dt} min",True,self.black)
+        text = self.font.render(f"dt : {self.dt:.5f} min",True,self.black)
         self.window.blit(text,(x,y))
         y+= distance
 
@@ -294,7 +293,7 @@ class Application(model.Model):
         y+= distance
 
         # division length
-        text = self.font.render(f"Div length : {self.max_length} \u03BCm",True,self.black)
+        text = self.font.render(f"Stochastic division",True,self.black)
         self.window.blit(text,(x,y))
         y+= distance
 
@@ -402,14 +401,14 @@ class Application(model.Model):
 
             #Calculation of the new points for  the current cell
             x1 = np.array([p_x + (p_ray-1)*np.cos(alpha1),p_y + (p_ray-1)*np.sin(alpha1)])
-            x2 = np.array([p_x + (p_ray-1)*np.cos(alpha2),p_y + (p_ray-1)*np.sin(alpha2)])
+            x2 = np.array([p_x + (p_ray)*np.cos(alpha2),p_y + (p_ray)*np.sin(alpha2)])
 
             # #Calculation of the new points for the next cell
             alpha = alpha - np.pi
             alpha1 = alpha + np.pi/2
             alpha2 = alpha - np.pi/2
 
-            x3 = [p_x_next + (p_ray-1)*np.cos(alpha1),p_y_next + (p_ray-1)*np.sin(alpha1)]
+            x3 = [p_x_next + (p_ray)*np.cos(alpha1),p_y_next + (p_ray)*np.sin(alpha1)]
             x4 = [p_x_next + (p_ray-1)*np.cos(alpha2),p_y_next + (p_ray-1)*np.sin(alpha2)]
             
             #drawing the lines

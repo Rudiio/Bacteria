@@ -1,5 +1,6 @@
 
 # Classes
+from matplotlib.pyplot import ylabel
 import disk
 import bacterium as bact
 
@@ -24,11 +25,12 @@ class Model:
         """Constructor for the model class"""
         #Creation of the list of bacteria
         
-        # Simulation parameters
-        self.disk_add_method =  4 # decide the position of the new disk
-        self.dt = 0.1
-        self.time = 0.0
-        self.tmax = 150
+        # Stiffnesses
+        self.ks = 10        # Springs linear stiffness
+        self.kt_par = 10    # Springs torsion parallel stiffness
+        self.kt_bot = 10    # Springs torsion bot stiffness
+        self.kc = 10        # Collision stiffness
+        self.stiffness = (self.ks,self.kt_par,self.kt_bot,self.kc)
 
         # Bacteria parameters and variables
         self.bacteria = []
@@ -49,6 +51,24 @@ class Model:
         self.rest_spring_l = self.radius
         self.theta = np.pi
 
+        # Simulation parameters
+        self.disk_add_method =  4 # decide the position of the new disk
+        # self.dt = 0.01
+        dtt = np.array([self.radius**2/self.ks *0.1,self.radius/self.kt_par *0.1,self.radius/self.kt_bot*0.1,2*self.radius**2/self.kc*0.1])
+        self.dt = dtt.min() # 0.01
+        self.time = 0.0
+        self.tmax = 500
+
+        # Mesh parameters
+        # Size of the mesh
+        self.Nx = 40
+        self.Ny = 40
+        self.dx = 2*self.radius
+
+        # Position of the down left corner
+        self.xmin = -self.dx*self.Nx/2 
+        self.ymin = -self.dx*self.Ny/2 
+    
     ### ---------------- Bacteria generators ---------------------------
 
     def generate_bacterium(self):
@@ -89,7 +109,7 @@ class Model:
             D.append(new_disk)
             l+=self.rest_spring_l
             i+=1
-        self.bacteria.append(bact.Bacterium(N=len(D),Disks=D,l=self.radius,t_i = self.time,gm=self.disk_add_method,theta=self.theta,growth_k=self.k,color=(0,128,0)))
+        self.bacteria.append(bact.Bacterium(N=len(D),Disks=D,l=self.radius,t_i = self.time,gm=self.disk_add_method,theta=self.theta,stiffness=self.stiffness,growth_k=self.k,color=(0,128,0)))
         self.N_bacteria()
 
     def gen_cell_pos(self,x,y,method):
@@ -248,6 +268,12 @@ class Model:
 
     ### ----------------- Collision detection -------------------
 
+    def reset_bacteria_pointers(self):
+        """Reset all the pointers from all disks of the simulation"""
+
+        for bact in self.bacteria:
+            bact.reset_pointers()
+
     def detect_collision(self,X : np.array,bact: list[bact.Bacterium] =[]):
         """ Detect if the position X is in collision with another bacterium
         return True if it detects a collision"""
@@ -257,14 +283,56 @@ class Model:
                 if( norm(X - d.X ) <= 2*d.radius):
                     return True
         return False
+
+    def space_mesh(self):
+        """ Construct an abstractive mesh of the space.
+        Returns of an array containing the first cell of each case.
+        Links all the corresponding disks"""
+
+        # Resentting all the pointers
+        self.reset_bacteria_pointers()
+
+        # Constructing the array 
+        first_cell = -1*np.ones((2,self.Nx*self.Ny))
+
+        for i in range(self.N):
+            bacte : bact.Bacterium = self.bacteria[i] 
+            for j in range(bacte.p_i):
+                d : disk.Disk = bacte.Disks[j]
                 
+                # Calculating the space index
+                k1  = np.floor((d.X[0]-self.xmin)/self.dx)
+                k2  = np.floor((d.X[1]-self.ymin)/self.dx)
+                l = int(k1 +self.Nx*k2)
+                
+                # Adding the cell into the first_cell array if case
+                if first_cell[0,l]==-1 and first_cell[1,l]==-1:
+                    first_cell[0,l]=i
+                    first_cell[1,l]=j
+                
+                # Linking the corresponding disks
+                else:
+                    ni = int(first_cell[0,l])
+                    nj = int(first_cell[1,l])
+
+                    while(self.bacteria[ni].Disks[nj].next_bact!=-1 and self.bacteria[ni].Disks[nj].next_disk!=-1 ):
+                        temp_i =ni
+                        temp_j =nj
+                        ni = self.bacteria[temp_i].Disks[temp_j].next_bact
+                        nj = self.bacteria[temp_i].Disks[temp_j].next_disk
+                    
+                    self.bacteria[ni].Disks[nj].next_bact = i
+                    self.bacteria[ni].Disks[nj].next_disk = j
+                
+        return first_cell
+
     ### ---------------- Division -------------------------------
     def division(self,bacte: bact.Bacterium):
         """ Divide the bacterium if the maximum number of disks is reached.
         Create two daughters bacteria"""
 
         # Checking if the bacterium should divide
-        if(bacte.L >= self.max_length):
+        if(bacte.L >= bacte.max_length):
             # Extracting the lists
             L1,L2 = bacte.division()
             
@@ -277,10 +345,10 @@ class Model:
             # Creation of the daughters
             color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
             D1 = bact.Bacterium(N=len(L1),Disks=L1,l=self.rest_spring_l,t_i=self.time,gm=self.disk_add_method,
-                growth_k=self.k,gen=bacte.gen+1,color=color)
+                growth_k=self.k,stiffness=self.stiffness,gen=bacte.gen+1,color=color)
             color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
             D2 = bact.Bacterium(N=len(L2),Disks=L2,l=self.rest_spring_l,t_i=self.time,gm=self.disk_add_method,
-                growth_k=self.k,gen=bacte.gen+1,color=color)
+                growth_k=self.k,stiffness=self.stiffness,gen=bacte.gen+1,color=color)
             
             # Deleting the mother
             self.bacteria.remove(bacte)
@@ -327,24 +395,25 @@ class Model:
                 L2[j].X = np.dot(M2,L2[j].X  - rc2 )+ rc2
                 
     ### ----------------- All Processes ------------------
-
+    
     def interaction_calculation(self):
         """ Calculate the intern and extern interactions of the bacteria wich modify the velocity
         of  the disks"""
+
+        # Construction of the space mesh
+        first_cell = self.space_mesh()
+        # print(first_cell)
 
         for i in range(0,self.N):
             bact = self.bacteria[i]
 
             # Calculation of the velocity
-            bact.spring_velocity(i,self.bacteria)
-
-    # def velocity_calculation(self,i):
-    #     self.bacteria[i].spring_velocity(i,self.bacteria)
+            mesh_param = (self.xmin,self.ymin,self.dx,self.Nx)
+            bact.spring_velocity(i,self.bacteria,first_cell,mesh_param)
 
     def bacteria_processes(self):
         """ Apply all the processes of the bacteria """
         self.interaction_calculation()
-        # p = Parallel(n_jobs=-1)(delayed(self.velocity_calculation)(i) for i in range(self.N))
 
         for bact in self.bacteria:
             # Numerical integration

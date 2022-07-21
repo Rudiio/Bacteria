@@ -1,13 +1,40 @@
 # class
-import joblib
 import disk 
 
 # Calculations
 import numpy as np
 from numpy.linalg import norm
 import random
+from scipy import stats
+import joblib
 
-# from joblib import Parallel,delayed
+def g(x,mu,sigma):
+    return 1/(sigma*np.sqrt(2*np.pi))*np.exp(-0.5*((x-mu)/sigma)**2)
+
+def increment_reject():
+    """ Simulates the law of the increment distribution """
+
+    # Density to fit
+    f = joblib.load("./kde/increment.pkl")
+
+    # Parameters of our gaussian hull
+    mu=50
+    sigma=20
+
+    # c
+    c=2
+
+    while True:
+        # gauss draw
+        x = random.gauss(mu,sigma)
+
+        # uniform draw
+        u = random.random()
+
+        # Acceptation
+        if(c*g(x,mu,sigma)*u < f(x)):
+            t = True
+            return x*0.1 
 
 class Bacterium:
     """ Class representing a bacterium 
@@ -18,7 +45,7 @@ class Bacterium:
     - the rest length of the springs l 
     - the stiffness constants ks,kt1, kt2"""
 
-    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi,t_i = 0,gm=1,growth_k = 0.01,gen=1, color = (0,0,0)):
+    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi,t_i = 0,gm=1,growth_k = 0.01,gen=1,stiffness=(1,1,1,1), color = (0,0,0)):
         """Constructor for the class Bacterium"""
 
         # Disks variables
@@ -28,17 +55,20 @@ class Bacterium:
 
         # Generation 
         self.gen = gen
+
         # bacteria length
         self.L = 1
         self.update_length()
+        self.max_length = self.L + increment_reject()
+        # print(self.max_length)
 
         # Springs parameters
         self.theta = theta  # Rest torque
         self.spring_rest_l = l  # Rest length
 
-        self.ks = 1 # Springs linear stiffness
-        self.kt_par = 1 # Springs torsion parallel stiffness
-        self.kt_bot = 1 # Springs torsion bot stiffness
+        self.ks = stiffness[0] # Springs linear stiffness
+        self.kt_par = stiffness[1] # Springs torsion parallel stiffness
+        self.kt_bot = stiffness[2] # Springs torsion bot stiffness
 
         # Growth variable
         self.k = growth_k    # Growth constant
@@ -52,7 +82,7 @@ class Bacterium:
         self.growth_method = gm
 
         # Collision constant
-        self.kc = 10
+        self.kc = stiffness[3]  # Collision stiffness
 
     def __str__(self):
         """Display the bacterium informations whit the print function"""
@@ -73,7 +103,7 @@ class Bacterium:
 
     def update_length(self):
         """Returns the length of a bacterium"""
-        self.L = self.get_segment_length().sum()
+        self.L = self.get_segment_length().sum() + 2*self.Disks[0].radius
 
     def points(self):
         """Returns an array of the points of the bacterium"""
@@ -82,30 +112,25 @@ class Bacterium:
             P.append([p.X[0],p.X[1]])
         return P
 
+    def reset_pointers(self):
+        """Reset the pointers of the disks of the bacteria"""
+
+        for d in self.Disks:
+            d.next_bact = -1
+            d.next_disk = -1
+
     ###-----------------  Velocity calculation -----------------------
 
-    # def forces(self,k,ci,bacteria):
-    #     """ Calculates the velocity"""
-    #     v=np.zeros(2)
-    #     if(self.p_i >1):
-    #         v += self.linear_spring(k) + self.torsion_spring_par(k) +self.torsion_spring_bot(k)
-    #     v+=self.non_overlapping(ci,bacteria,k)
-    #     return v
-
-    def spring_velocity(self,ci,bacteria):
+    def spring_velocity(self,ci,bacteria,first_cell,mesh_param):
         """Calculate the velocity that comes from the spring forces/torques
         of each cell of the bacterium"""
-
-        # n = Parallel(n_jobs=1)(delayed(self.forces)(k,ci,bacteria) for k in range(self.p_i))
-        # print(n)
-        # for k in range(self.p_i):
-        #     self.Disks[k].V =n[k]
 
         # Loop on all the Disks
         for k in range(self.p_i):
             if(self.p_i >1):
                 self.Disks[k].V = self.linear_spring(k) + self.torsion_spring_par(k) +self.torsion_spring_bot(k)
-            self.non_overlapping(ci,bacteria,k)
+            # self.repulsion(ci,bacteria,k)
+            self.repulsion_opti(ci,bacteria,k,first_cell,mesh_param)
 
     def linear_spring(self,k):
         """Calculates the velocity created by the linear springs"""
@@ -309,7 +334,7 @@ class Bacterium:
         
         return V
 
-    def non_overlapping(self,ci :int,bacteria, j):
+    def repulsion(self,ci :int,bacteria, j):
         """Calculate the non-overlapping forces for all the disk of a bacterium
         toward the other disks of the bacteria of the simulation"""
 
@@ -347,7 +372,58 @@ class Bacterium:
 
                         # bacteria[i].Disks[l].vplus(v)
                         # cbact.Disks[l].V += v
+    
+    def repulsion_2disks(self,cdisk :disk.Disk,odisk:disk.Disk):
+        """" Calculate the repulsion force applied by a odisk on cdisk"""
+        Xj = cdisk.X
+        Xl = odisk.X
+
+        if(norm(Xj - Xl) <= 2*self.Disks[0].radius):
+            return -self.kc/((2*self.Disks[0].radius)**2)*(1-(2*self.Disks[0].radius)/(norm(Xj-Xl)+self.eps))*(Xj-Xl)
+
+        return 0          
+
+    def repulsion_opti(self,ci: int,bacteria,j,first_cell,mesh_param):
+        """ Calculate the disks  inter bacteria interactions with the use of a spatial mesh"""
+
+        N = len(bacteria)
+        v=0
+
+        # mesh param extraction
+        xmin =mesh_param[0]
+        ymin = mesh_param[1]
+        dx = mesh_param[2]
+        Nx = mesh_param[3]
+
+        # Current disk
+        Xj = self.Disks[j].X
+
+        # Calculating the space index
+        k1  = np.floor((Xj[0]-xmin)/dx)
+        k2  = np.floor((Xj[1]-ymin)/dx)
+        l = int(k1 +Nx*k2)
         
+        # Itering on the cases around
+        for k1 in [-1,0,1]:
+            for k2 in [-1,0,1]:
+                # cases number
+                k = l +k1 + k2*Nx
+
+                # head
+                ni = int(first_cell[0,k])
+                nj = int(first_cell[1,k])
+
+                while(bacteria[ni].Disks[nj].next_bact!=-1 and bacteria[ni].Disks[nj].next_disk!=-1):
+                    # force calculation
+                    if(ci!=ni):
+                        self.Disks[j].V += self.repulsion_2disks(self.Disks[j],bacteria[ni].Disks[nj]) 
+
+                    temp_i = ni
+                    temp_j = nj
+
+                    # next disk
+                    ni = bacteria[temp_i].Disks[temp_j].next_bact
+                    nj = bacteria[temp_i].Disks[temp_j].next_disk
 
     ###------------------ Model bacterium processes -------------------------
     
@@ -364,7 +440,7 @@ class Bacterium:
         if(method==2 or method==5):
             rate_i = 2/(self.k*self.p_i) 
 
-        if( t - self.t_i >= rate_i and self.L< max_length and self.p_i <self.max_disks):
+        if( t - self.t_i >= rate_i and self.L< self.max_length and self.p_i <self.max_disks):
             # Saving the moment we added a new disk
             self.t_i = rate_i + self.t_i
             
