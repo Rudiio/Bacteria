@@ -41,7 +41,7 @@ class Application(model.Model):
         #Size of the window 
         self.height = 600
         self.width = 1000
-        self.window = pygame.display.set_mode([self.width,self.height],pygame.SCALED)
+        self.window = pygame.display.set_mode([self.width,self.height],pygame.RESIZABLE)
         pygame.display.set_caption("Bacteria micro-colonies simulator")
         self.black =  (0,0,0)
         self.clock = pygame.time.Clock()
@@ -119,6 +119,7 @@ class Application(model.Model):
             self.bacteria_processes()
 
             # Draw the bacteria
+            # self.daughter_cell_evolution()
             self.draw_bacteria()
 
             # Draw the axises
@@ -288,7 +289,7 @@ class Application(model.Model):
         y+= distance
 
         # Growth rate
-        text = self.font.render(f"Growth rate : {self.k}",True,self.black)
+        text = self.font.render(f"Growth rate : {self.gk}",True,self.black)
         self.window.blit(text,(x,y))
         y+= distance
 
@@ -587,9 +588,9 @@ class Application(model.Model):
             # Calculating the new scale
             if self.max_length/2 < 5:
                 self.graduation = 1
-            elif self.graduation/2 <10:
+            elif self.max_length/2 <10:
                 self.graduation = 5
-            elif self.graduation/2 < 20:
+            elif self.max_length/2 < 20:
                 self.graduation = 10
         
         # Centering 

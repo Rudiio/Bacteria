@@ -8,8 +8,6 @@ import bacterium as bact
 import numpy as np
 import random
 from numpy.linalg import norm
-# from joblib import Parallel,delayed
-
 
 class Model:
     """Class for the modelisation
@@ -25,7 +23,7 @@ class Model:
         """Constructor for the model class"""
         #Creation of the list of bacteria
         
-        # Stiffnesses
+        # Stiffnesses in N.micrometer^-1
         self.ks = 10        # Springs linear stiffness
         self.kt_par = 10    # Springs torsion parallel stiffness
         self.kt_bot = 10    # Springs torsion bot stiffness
@@ -36,15 +34,15 @@ class Model:
         self.bacteria = []
         self.N= 0
         
-        # disks parameters
-        self.radius = 2.15 #0.5
+        # disks parameters 
+        self.radius = 1.074 #2.15 #0.5   # in micrometer
 
         # Initial length
-        self.l_ini = 6.8
+        self.l_ini = 6.8    # in micrometer
 
         # Growth parameters
-        self.k = 0.02843 #0.025 # 0.001    # Growth constant
-        self.max_length = 12.36     # division length
+        self.gk = 0.02843 #0.025 # 0.001    # Growth rate
+        self.max_length = 12.36     # division length (useless)
         self.max_disks = 20 #1/(self.k*self.dt)
 
         # Springs parameters
@@ -61,8 +59,8 @@ class Model:
 
         # Mesh parameters
         # Size of the mesh
-        self.Nx = 40
-        self.Ny = 40
+        self.Nx = 60
+        self.Ny = 60
         self.dx = 2*self.radius
 
         # Position of the down left corner
@@ -103,13 +101,14 @@ class Model:
         l = 0
         disk1 = disk.Disk(X=np.array([-self.l_ini/2,0]),mass=1,ray=self.radius)
         D = [disk1]
+        l+=2*self.radius
         i=0
         while l<self.l_ini:
             new_disk = disk.Disk(X=np.array([D[i].X[0]+self.rest_spring_l,D[i].X[1]]),mass=1,ray=self.radius)
             D.append(new_disk)
             l+=self.rest_spring_l
             i+=1
-        self.bacteria.append(bact.Bacterium(N=len(D),Disks=D,l=self.radius,t_i = self.time,gm=self.disk_add_method,theta=self.theta,stiffness=self.stiffness,growth_k=self.k,color=(0,128,0)))
+        self.bacteria.append(bact.Bacterium(N=len(D),Disks=D,l=self.radius,t_i = self.time,gm=self.disk_add_method,theta=self.theta,stiffness=self.stiffness,growth_k=self.gk,color=(0,128,0)))
         self.N_bacteria()
 
     def gen_cell_pos(self,x,y,method):
@@ -266,6 +265,14 @@ class Model:
         self.bacteria.append(new_bacteria)
         self.N_bacteria()
 
+    def daughter_cell_evolution(self):
+        """" """
+        if(self.N==4):
+            self.bacteria[0].color=(139,0,0)
+            self.bacteria[1].color= (0,0,128)
+            self.bacteria[2].color=(255,140,0)
+            self.bacteria[3].color=(34,139,34)
+            
     ### ----------------- Collision detection -------------------
 
     def reset_bacteria_pointers(self):
@@ -274,7 +281,7 @@ class Model:
         for bact in self.bacteria:
             bact.reset_pointers()
 
-    def detect_collision(self,X : np.array,bact: list[bact.Bacterium] =[]):
+    def detect_collision(self,X : np.array,bact=[]):
         """ Detect if the position X is in collision with another bacterium
         return True if it detects a collision"""
 
@@ -285,7 +292,7 @@ class Model:
         return False
 
     def space_mesh(self):
-        """ Construct an abstractive mesh of the space.
+        """ Constructs an abstractive mesh of the space.
         Returns of an array containing the first cell of each case.
         Links all the corresponding disks"""
 
@@ -345,10 +352,10 @@ class Model:
             # Creation of the daughters
             color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
             D1 = bact.Bacterium(N=len(L1),Disks=L1,l=self.rest_spring_l,t_i=self.time,gm=self.disk_add_method,
-                growth_k=self.k,stiffness=self.stiffness,gen=bacte.gen+1,color=color)
+                growth_k=self.gk,stiffness=self.stiffness,gen=bacte.gen+1,color=color)
             color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
             D2 = bact.Bacterium(N=len(L2),Disks=L2,l=self.rest_spring_l,t_i=self.time,gm=self.disk_add_method,
-                growth_k=self.k,stiffness=self.stiffness,gen=bacte.gen+1,color=color)
+                growth_k=self.gk,stiffness=self.stiffness,gen=bacte.gen+1,color=color)
             
             # Deleting the mother
             self.bacteria.remove(bacte)
@@ -360,7 +367,7 @@ class Model:
             self.bacteria.append(D2)
             self.N +=1
 
-    def division_noise(self,L1:list[disk.Disk],L2 : list[disk.Disk]):
+    def division_noise(self,L1,L2):
         """ Add angular noise to the lists of disks after division"""
 
         # Noises
@@ -402,7 +409,6 @@ class Model:
 
         # Construction of the space mesh
         first_cell = self.space_mesh()
-        # print(first_cell)
 
         for i in range(0,self.N):
             bact = self.bacteria[i]

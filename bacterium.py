@@ -45,7 +45,7 @@ class Bacterium:
     - the rest length of the springs l 
     - the stiffness constants ks,kt1, kt2"""
 
-    def __init__(self,N=0,Disks : list[disk.Disk] = [],l = 1.0,theta = np.pi,t_i = 0,gm=1,growth_k = 0.01,gen=1,stiffness=(1,1,1,1), color = (0,0,0)):
+    def __init__(self,N=0,Disks = [],l = 1.0,theta = np.pi,t_i = 0,gm=1,growth_k = 0.01,gen=1,stiffness=(1,1,1,1), color = (0,0,0)):
         """Constructor for the class Bacterium"""
 
         # Disks variables
@@ -59,7 +59,7 @@ class Bacterium:
         # bacteria length
         self.L = 1
         self.update_length()
-        self.max_length = self.L + increment_reject()
+        self.max_length = self.L + increment_reject()   # length of  divison
         # print(self.max_length)
 
         # Springs parameters
@@ -71,7 +71,7 @@ class Bacterium:
         self.kt_bot = stiffness[2] # Springs torsion bot stiffness
 
         # Growth variable
-        self.k = growth_k    # Growth constant
+        self.gk = growth_k    # Growth constant
         self.t_i = t_i    # time of the last addition
         self.max_disks = 20 # Number maximal of disk contained by a bacterium
 
@@ -129,7 +129,7 @@ class Bacterium:
         for k in range(self.p_i):
             if(self.p_i >1):
                 self.Disks[k].V = self.linear_spring(k) + self.torsion_spring_par(k) +self.torsion_spring_bot(k)
-            # self.repulsion(ci,bacteria,k)
+            # print("no opti",self.repulsion(ci,bacteria,k))
             self.repulsion_opti(ci,bacteria,k,first_cell,mesh_param)
 
     def linear_spring(self,k):
@@ -367,7 +367,7 @@ class Bacterium:
                     
                     # checking the overlapping condition
                     if(norm(Xj - Xl) <= 2*self.Disks[0].radius):
-                        v = self.kc/((2*self.Disks[0].radius)**2)*(1-(2*self.Disks[0].radius)/(norm(Xj-Xl)+self.eps))*(Xj-Xl)
+                        v += self.kc/((2*self.Disks[0].radius)**2)*(1-(2*self.Disks[0].radius)/(norm(Xj-Xl)+self.eps))*(Xj-Xl)
                         self.Disks[j].V -= v
 
                         # bacteria[i].Disks[l].vplus(v)
@@ -407,13 +407,13 @@ class Bacterium:
         for k1 in [-1,0,1]:
             for k2 in [-1,0,1]:
                 # cases number
-                k = l +k1 + k2*Nx
+                k = l + k1 + k2*Nx
 
                 # head
                 ni = int(first_cell[0,k])
                 nj = int(first_cell[1,k])
 
-                while(bacteria[ni].Disks[nj].next_bact!=-1 and bacteria[ni].Disks[nj].next_disk!=-1):
+                while(ni!=-1 and ni!=-1):
                     # force calculation
                     if(ci!=ni):
                         self.Disks[j].V += self.repulsion_2disks(self.Disks[j],bacteria[ni].Disks[nj]) 
@@ -428,17 +428,18 @@ class Bacterium:
     ###------------------ Model bacterium processes -------------------------
     
     ## GROWTH
+    
     def growth(self,t,method,max_length):
         """ Handle the growth proccess of thre bacterium 
         add a new disk if t_i > t. The position of the new bacteria depends on method"""
 
-        rate_i = 1/(self.k*self.p_i) 
+        rate_i = 1/(self.gk*self.p_i) 
 
         #updating the length of the bacteria
         self.update_length()
 
         if(method==2 or method==5):
-            rate_i = 2/(self.k*self.p_i) 
+            rate_i = 2/(self.gk*self.p_i) 
 
         if( t - self.t_i >= rate_i and self.L< self.max_length and self.p_i <self.max_disks):
             # Saving the moment we added a new disk
