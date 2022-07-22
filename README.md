@@ -80,4 +80,4 @@ To install Numpy (with pip package manager)
 
 ## Simulations
 
-![simu](https://github.com/Rudiio/Images-factory/blob/main/bacteria2.png)
+![simu](https://github.com/Rudiio/Images-factory/blob/main/bacteria3.png)
