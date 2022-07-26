@@ -18,23 +18,18 @@ def increment_reject():
     f = joblib.load("./kde/increment.pkl")
 
     # Parameters of our gaussian hull
-    mu=50
-    sigma=20
-
-    # c
+    mu=3.23
+    sigma=1.4
     c=2
-
-    while True:
-        # gauss draw
+    t = False
+    
+    while not t:
         x = random.gauss(mu,sigma)
-
-        # uniform draw
         u = random.random()
 
-        # Acceptation
         if(c*g(x,mu,sigma)*u < f(x)):
             t = True
-            return x*0.1 
+            return x 
 
 class Bacterium:
     """ Class representing a bacterium 
@@ -59,9 +54,7 @@ class Bacterium:
         # bacteria length
         self.L = 1
         self.update_length()
-        self.max_length = self.L + increment_reject()   # length of  divison
-        # print(self.max_length)
-
+        self.max_length = self.L + increment_reject()   # length of  divison in meter (SI)
         # Springs parameters
         self.theta = theta  # Rest torque
         self.spring_rest_l = l  # Rest length
@@ -807,7 +800,11 @@ class Bacterium:
         an Euler explicit integrator"""
 
         for i in range(self.p_i):
-            self.Disks[i].X = self.Disks[i].X + dt*self.Disks[i].V/self.Disks[i].mass
+            self.Disks[i].X = self.Disks[i].X + dt*self.Disks[i].V      # Calculation in meter and s (Si)
+            
+
+        
+        
         
 
 if __name__=="__main__":

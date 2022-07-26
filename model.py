@@ -1,6 +1,10 @@
 
+from pyexpat import model
+import time
+
+from black import Mode
+
 # Classes
-from matplotlib.pyplot import ylabel
 import disk
 import bacterium as bact
 
@@ -23,25 +27,26 @@ class Model:
         """Constructor for the model class"""
         #Creation of the list of bacteria
         
-        # Stiffnesses in N.micrometer^-1
+        # Stiffnesses with micrometer
         self.ks = 10        # Springs linear stiffness
-        self.kt_par = 10    # Springs torsion parallel stiffness
-        self.kt_bot = 10    # Springs torsion bot stiffness
+        self.kt_par = 10   # Springs torsion parallel stiffness
+        self.kt_bot = 10   # Springs torsion bot stiffness
         self.kc = 10        # Collision stiffness
+
         self.stiffness = (self.ks,self.kt_par,self.kt_bot,self.kc)
 
         # Bacteria parameters and variables
         self.bacteria = []
         self.N= 0
         
-        # disks parameters 
-        self.radius = 1.074 #2.15 #0.5   # in micrometer
+        # disks parameters in micrometer
+        self.radius = 0.7 # 0.45  #2.15 #0.5  
 
-        # Initial length
-        self.l_ini = 6.8    # in micrometer
+        # Initial length in micrometer
+        self.l_ini = 4.4  # 2.41
 
         # Growth parameters
-        self.gk = 0.02843 #0.025 # 0.001    # Growth rate
+        self.gk = 0.02843 #0.0168 #0.025 # 0.001    # Growth rate
         self.max_length = 12.36     # division length (useless)
         self.max_disks = 20 #1/(self.k*self.dt)
 
@@ -52,10 +57,10 @@ class Model:
         # Simulation parameters
         self.disk_add_method =  4 # decide the position of the new disk
         # self.dt = 0.01
-        dtt = np.array([self.radius**2/self.ks *0.1,self.radius/self.kt_par *0.1,self.radius/self.kt_bot*0.1,2*self.radius**2/self.kc*0.1])
-        self.dt = dtt.min() # 0.01
+        dtt = np.array([self.radius**2/(self.ks),self.radius/(self.kt_par),self.radius/(self.kt_bot),4*self.radius**2/(self.kc)])
+        self.dt = dtt.min()*0.1 # 0.01  # in min
         self.time = 0.0
-        self.tmax = 500
+        self.tmax = 200
 
         # Mesh parameters
         # Size of the mesh
@@ -66,7 +71,10 @@ class Model:
         # Position of the down left corner
         self.xmin = -self.dx*self.Nx/2 
         self.ymin = -self.dx*self.Ny/2 
-    
+
+        # Generating the first bacterium
+        self.generate_bacterium()
+        
     ### ---------------- Bacteria generators ---------------------------
 
     def generate_bacterium(self):
@@ -440,3 +448,58 @@ class Model:
     def increment_time(self):
         """Increment the total time of simulation by dt"""
         self.time +=self.dt
+    
+    def write_txt(self,s):
+        """" Writes the data into a txt file"""
+        file = open(s,"a")
+        
+        file.write("N disks\t")
+        file.write("Disks radius\t")
+        file.write("time\t")
+        file.write("Gen\t")
+        file.write("ks\t")
+        file.write("kt_bot\t")
+        file.write("kt_par\t")
+        file.write("kc\t")
+        file.write("div_length\t")
+        file.write("X")
+        file.write("\n")
+
+        for bact in self.bacteria:
+            file.write(f"{bact.p_i}\t")
+            file.write(f"{self.radius}\t")
+            file.write(f"{self.time:.3f}\t")
+            file.write(f"{bact.gen}\t")
+            file.write(f"{self.ks}\t")
+            file.write(f"{self.kt_bot}\t")
+            file.write(f"{self.kt_par}\t")
+            file.write(f"{self.kc}\t")
+            file.write(f"{bact.max_length}\t")
+            for j in range(bact.p_i):
+                file.write(f"{bact.Disks[j].X[0]} {bact.Disks[j].X[1]} ")
+            file.write("\n")
+        file.close()
+    
+    def mainloop(self):
+        """Main loop of the application/simulation"""
+        
+        start = time.time()
+        while self.time <= self.tmax :     
+
+            #Move the bacteria
+            self.bacteria_processes()
+
+            # Increasing the time
+            self.increment_time()
+            print("time=",self.time)
+
+        end = time.time()
+        print(end-start)
+        
+        #Writing the final data
+        self.write_txt(r"./states/simu3.txt")
+
+
+if __name__=="__main__":
+    simu = Model()
+    simu.mainloop()

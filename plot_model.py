@@ -1,8 +1,10 @@
+from ast import arg
 from os import environ
 import os
 import datetime
 import matplotlib.pyplot as plt
 import time
+import pandas as pd
 
 # Pygame
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
@@ -18,7 +20,21 @@ import disk
 import bacterium as bact
 import model
 
-class Application(model.Model):
+def convertX(L):
+    T = L.split(" ")
+    T.pop()
+    return np.array(T,dtype=float)
+
+def X_to_bact(L,radius):
+    Disks =[]
+    
+    for i in range(0,L.shape[0]-1,2):
+        Disks.append(disk.Disk(np.array([L[i],L[i+1]]),ray=radius))
+    
+    color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+    return bact.Bacterium(N=len(Disks),Disks=Disks,color=color)
+
+class Plot(model.Model):
     """Class for handleling the graphical aspect and interface of the simulations
     It inherits of the Model class that represents the actual simulation
     
@@ -37,9 +53,6 @@ class Application(model.Model):
         #Creation of the window/tk object
         pygame.init()
         model.Model.__init__(self)
-        # infoObject = pygame.display.Info()
-        # print(infoObject)
-        
         """Display parameters"""
         #Size of the window 
         self.height = 600
@@ -68,8 +81,22 @@ class Application(model.Model):
         self.axis_state = True
         self.zoom_state = 1 #zoom and dezoom state
 
-        #bacteria
         self.drawing_bacteria_state=1
+
+        # Modifying the model informations
+        df = pd.read_csv("./states/simu2.txt",sep="\t")
+        df["X"]=df["X"].apply(convertX)
+        
+        self.ks=df["ks"][0]
+        self.kt_bot=df["kt_bot"][0]
+        self.kt_par=df["kt_par"][0]
+        self.kc=df["kc"][0]
+        self.radius=df["Disks radius"][0]
+        self.time=df["time"][0]
+        B=df["X"].apply(X_to_bact,args=(self.radius,))
+        
+        self.bacteria = B
+        self.N=len(self.bacteria)
 
         # Initial drawings
         self.autoscale(1)
@@ -79,14 +106,7 @@ class Application(model.Model):
     def mainloop(self):
         """Main loop of the application/simulation"""
         
-        start = time.time()
-        while self.running and self.time <= self.tmax :     
-            # if(int(self.time)==70):
-            #     e = datetime.datetime.now()
-            #     pygame.image.save(self.window,"./screenshots/screenshot_" + "%s_%s_%s_" % (e.day, e.month, e.year) + "%s_%s_%s" % (e.hour, e.minute, e.second) + ".png")
-            #     print("> screenshot saved")
-
-            self.update_fps()    
+        while self.running:       
             # Events
             self.event()
 
@@ -94,11 +114,7 @@ class Application(model.Model):
             # self.window.fill((255, 255, 255))
             self.window.fill((220,220,220))
 
-            #Move the bacteria
-            self.bacteria_processes()
-
             # Draw the bacteria
-            # self.daughter_cell_evolution()
             self.draw_bacteria()
 
             # Draw the axises
@@ -108,24 +124,13 @@ class Application(model.Model):
             #Draw the informations
             self.draw_informations()
 
-            # Increasing the time
-            self.increment_time()
-
             # Updating the screen
             self.clock.tick()
             pygame.display.flip()
-        end = time.time()
-        print(end-start)
         
-        #Writing the final data
-        # self.write_txt()
-
         pygame.quit()
-    
-    def update_fps(self):
-        self.fps = str(int(self.clock.get_fps()))
 
-    ### ------------------ Drawing methods ----------------------------------###
+        ### ------------------ Drawing methods ----------------------------------###
 
     def draw_axis(self):
         "Draw the axises"
@@ -241,11 +246,6 @@ class Application(model.Model):
         x = self.width - 150
         y = 5
         distance = 20
-
-        # fps
-        text = self.font.render(f"fps : {self.fps}",True,self.black)
-        self.window.blit(text,(x,y))
-        y+= distance
 
         # Number of bacteria
         text = self.font.render(f"Number of bacteria : {self.N}",True,self.black)
@@ -385,7 +385,7 @@ class Application(model.Model):
             alpha2 = alpha - np.pi/2
 
             #Calculation of the new points for  the current cell
-            x1 = np.array([p_x + (p_ray-1)*np.cos(alpha1),p_y + (p_ray-1)*np.sin(alpha1)])
+            x1 = np.array([p_x + (p_ray)*np.cos(alpha1),p_y + (p_ray)*np.sin(alpha1)])
             x2 = np.array([p_x + (p_ray)*np.cos(alpha2),p_y + (p_ray)*np.sin(alpha2)])
 
             # #Calculation of the new points for the next cell
@@ -394,7 +394,7 @@ class Application(model.Model):
             alpha2 = alpha - np.pi/2
 
             x3 = [p_x_next + (p_ray)*np.cos(alpha1),p_y_next + (p_ray)*np.sin(alpha1)]
-            x4 = [p_x_next + (p_ray-1)*np.cos(alpha2),p_y_next + (p_ray-1)*np.sin(alpha2)]
+            x4 = [p_x_next + (p_ray)*np.cos(alpha2),p_y_next + (p_ray)*np.sin(alpha2)]
             
             #drawing the lines
             pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
@@ -586,5 +586,5 @@ class Application(model.Model):
 
         
 if __name__=="__main__":
-    app = Application()
-    app.mainloop()
+    plot= Plot()
+    plot.mainloop()

@@ -6,17 +6,19 @@ import random
 
 # Distribution à fit
 incre = joblib.load("./increment.pkl")
-x = np.linspace(10,150,100)
+x = np.linspace(0,10,100)
 y = incre(x)
-
+indmax = 32
+mu = 3.23
 # Gaussienne
-mu=50
-sigma = 20
+
+mu=3.23
+sigma = 1.4
 
 L = []
 
-# for i in range(10000):
-#     L.append(random.gauss(mu,sigma))
+for i in range(10000):
+    L.append(random.gauss(mu,sigma))
 
 c=2
 
@@ -24,8 +26,8 @@ def g(x,mu,sigma):
     return 1/(sigma*np.sqrt(2*np.pi))*np.exp(-0.5*((x-mu)/sigma)**2)
 
 def rejet():
-    mu=50
-    sigma=20
+    mu=3.23
+    sigma=1.4
     c=2
     t = False
     while not t:
