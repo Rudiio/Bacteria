@@ -67,7 +67,7 @@ Here are the studied parameters:
 
 ## Install
 
-The program relies on the pygame API for the graphical interface and on Numpy for the arrays and vector computations.
+The program relies on the pygame API for the graphical interface, on Numpy for the arrays and vector computations, Scipy for stats and Joblib.
 
 To install pygame (with pip package manager)
 
@@ -77,6 +77,13 @@ To install Numpy (with pip package manager)
 
 ``` pip install numpy ```
 
+To install Scipy (with pip package manager)
+
+``` pip install Scipy ```
+
+To install Joblib (with pip package manager)
+
+``` pip install Joblib ```
 
 ## Simulations
 

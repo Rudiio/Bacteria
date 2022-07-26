@@ -1,5 +1,3 @@
-
-from pyexpat import model
 import time
 
 from black import Mode
