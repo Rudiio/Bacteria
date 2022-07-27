@@ -1,7 +1,5 @@
 import time
 
-from black import Mode
-
 # Classes
 import disk
 import bacterium as bact
@@ -10,6 +8,7 @@ import bacterium as bact
 import numpy as np
 import random
 from numpy.linalg import norm
+
 
 class Model:
     """Class for the modelisation
@@ -27,8 +26,8 @@ class Model:
         
         # Stiffnesses with micrometer
         self.ks = 10        # Springs linear stiffness
-        self.kt_par = 10   # Springs torsion parallel stiffness
-        self.kt_bot = 10   # Springs torsion bot stiffness
+        self.kt_par = 0.1   # Springs torsion parallel stiffness
+        self.kt_bot = 0.1   # Springs torsion bot stiffness
         self.kc = 10        # Collision stiffness
 
         self.stiffness = (self.ks,self.kt_par,self.kt_bot,self.kc)
@@ -45,7 +44,7 @@ class Model:
 
         # Growth parameters
         self.gk = 0.02843 #0.0168 #0.025 # 0.001    # Growth rate
-        self.max_length = 12.36     # division length (useless)
+        self.max_length = 15     # division length (useless)
         self.max_disks = 20 #1/(self.k*self.dt)
 
         # Springs parameters
@@ -58,7 +57,7 @@ class Model:
         dtt = np.array([self.radius**2/(self.ks),self.radius/(self.kt_par),self.radius/(self.kt_bot),4*self.radius**2/(self.kc)])
         self.dt = dtt.min()*0.1 # 0.01  # in min
         self.time = 0.0
-        self.tmax = 200
+        self.tmax = 150
 
         # Mesh parameters
         # Size of the mesh
@@ -76,34 +75,6 @@ class Model:
     ### ---------------- Bacteria generators ---------------------------
 
     def generate_bacterium(self):
-        # disk1 = disk.Disk(X=np.array([0,0]),mass=0.1,ray=self.radius)
-        # self.bacteria = [bact.Bacterium(N=1,Disks=[disk1],l=self.rest_spring_l,theta=self.theta,color=(139,0,0))]
-        # self.N+=1
-        # disk2 = disk.Disk(X=np.array([disk1.X[0]+self.bacteria[0].spring_rest_l+10,disk1.X[1]]),mass=0.1,ray=self.radius)
-        # self.bacteria[0].Disks.append(disk2)
-        # self.bacteria[0].p_i+=1
-        # disk3 = disk.Disk(X=np.array([disk2.X[0]+self.bacteria[0].spring_rest_l,disk2.X[1]+5]),mass=0.1,ray=self.radius)
-        # self.bacteria[0].Disks.append(disk3)
-        # self.bacteria[0].p_i+=1
-
-        # disk1 = disk.Disk(X=np.array([1,5]),mass=1,ray=self.radius)
-        # self.bacteria = [bact.Bacterium(N=1,Disks=[disk1],l=self.radius,t_i = self.time,gm=self.disk_add_method,theta=self.theta,growth_k=self.k,color=(139,0,0))]
-        # self.N+=1
-        # disk2 = disk.Disk(X=np.array([disk1.X[0]+self.bacteria[0].spring_rest_l,disk1.X[1]]),mass=1,ray=self.radius)
-        # self.bacteria[0].Disks.append(disk2)
-        # self.bacteria[0].p_i+=1
-        # disk3 = disk.Disk(X=np.array([disk2.X[0]+self.bacteria[0].spring_rest_l,disk2.X[1]]),mass=1,ray=self.radius)
-        # self.bacteria[0].Disks.append(disk3)
-        # self.bacteria[0].p_i+=1
-        
-
-        # disk1 = disk.Disk(X=np.array([25,25]),mass=1,ray=self.radius)
-        # disk2 = disk.Disk(X=np.array([disk1.X[0]+self.rest_spring_l,disk1.X[1]]),mass=1,ray=self.radius)
-        # disk3 = disk.Disk(X=np.array([disk2.X[0]+self.rest_spring_l,disk2.X[1]]),mass=1,ray=self.radius)
-        # disk4 = disk.Disk(X=np.array([disk3.X[0]+self.rest_spring_l,disk3.X[1]]),mass=1,ray=self.radius)
-        # disk5 = disk.Disk(X=np.array([disk4.X[0]+self.rest_spring_l,disk4.X[1]]),mass=1,ray=self.radius)
-        # self.bacteria.append (bact.Bacterium(N=5,Disks=[disk1,disk2,disk3,disk4,disk5],l=self.radius,t_i = self.time,gm=self.disk_add_method,theta=self.theta,growth_k=self.k,color=(0,128,0)))
-        
         l = 0
         disk1 = disk.Disk(X=np.array([-self.l_ini/2,0]),mass=1,ray=self.radius)
         D = [disk1]
@@ -459,6 +430,7 @@ class Model:
         file.write("kt_bot\t")
         file.write("kt_par\t")
         file.write("kc\t")
+        file.write("current length\t")
         file.write("div_length\t")
         file.write("X")
         file.write("\n")
@@ -472,6 +444,7 @@ class Model:
             file.write(f"{self.kt_bot}\t")
             file.write(f"{self.kt_par}\t")
             file.write(f"{self.kc}\t")
+            file.write(f"{bact.L}\t")
             file.write(f"{bact.max_length}\t")
             for j in range(bact.p_i):
                 file.write(f"{bact.Disks[j].X[0]} {bact.Disks[j].X[1]} ")
@@ -495,7 +468,7 @@ class Model:
         print(end-start)
         
         #Writing the final data
-        self.write_txt(r"./states/simu3.txt")
+        self.write_txt(r"./states/simu7.txt")
 
 
 if __name__=="__main__":

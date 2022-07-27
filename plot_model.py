@@ -84,7 +84,7 @@ class Plot(model.Model):
         self.drawing_bacteria_state=1
 
         # Modifying the model informations
-        df = pd.read_csv("./states/simu2.txt",sep="\t")
+        df = pd.read_csv("./states/simu7.txt",sep="\t")
         df["X"]=df["X"].apply(convertX)
         
         self.ks=df["ks"][0]

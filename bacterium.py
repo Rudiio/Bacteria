@@ -54,7 +54,8 @@ class Bacterium:
         # bacteria length
         self.L = 1
         self.update_length()
-        self.max_length = self.L + increment_reject()   # length of  divison in meter (SI)
+        self.max_length = self.L + increment_reject()   # length of  divison in micrometer
+
         # Springs parameters
         self.theta = theta  # Rest torque
         self.spring_rest_l = l  # Rest length
@@ -342,18 +343,6 @@ class Bacterium:
             cbact = bacteria[i]
             p_i = cbact.p_i
 
-            # if(i==ci):
-            #     for l in range(0,p_i):
-            #         Xl = cbact.Disks[l].X
-                    
-            #         # checking the overlapping condition
-            #         if(norm(Xj - Xl) <= 2*self.Disks[0].radius and abs(l-j)>1):
-            #             v = self.kc/((2*self.Disks[0].radius)**2)*(1-(2*self.Disks[0].radius)/(norm(Xj-Xl)+self.eps))*(Xj-Xl)
-            #             self.Disks[j].V -= v
-            #             # bacteria[i].Disks[l].V += v
-
-            # Itering on the disks
-            # else:
             if(i!=ci):
                 for l in range(0,p_i):
                     Xl = cbact.Disks[l].X
