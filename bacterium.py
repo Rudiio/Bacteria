@@ -115,7 +115,7 @@ class Bacterium:
 
     ###-----------------  Velocity calculation -----------------------
 
-    def spring_velocity(self,ci,bacteria,first_cell,mesh_param):
+    def spring_velocity(self,ci,bacteria,first_cell,mesh_param,mu):
         """Calculate the velocity that comes from the spring forces/torques
         of each cell of the bacterium"""
 
@@ -125,6 +125,7 @@ class Bacterium:
                 self.Disks[k].V = self.linear_spring(k) + self.torsion_spring_par(k) +self.torsion_spring_bot(k)
             # print("no opti",self.repulsion(ci,bacteria,k))
             self.repulsion_opti(ci,bacteria,k,first_cell,mesh_param)
+            self.Disks[k].V *=1/(mu*self.L)
 
     def linear_spring(self,k):
         """Calculates the velocity created by the linear springs"""

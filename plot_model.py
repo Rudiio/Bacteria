@@ -2,9 +2,11 @@ from ast import arg
 from os import environ
 import os
 import datetime
+from re import X
 import matplotlib.pyplot as plt
 import time
 import pandas as pd
+from scipy.spatial import ConvexHull
 
 # Pygame
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
@@ -48,7 +50,7 @@ class Plot(model.Model):
     - pixel length of a graduation
     - axis origin (y-axis is reverted)"""
 
-    def __init__(self):
+    def __init__(self,file_path):
         """Constructor for the display/pygame class"""
         #Creation of the window/tk object
         pygame.init()
@@ -84,7 +86,7 @@ class Plot(model.Model):
         self.drawing_bacteria_state=1
 
         # Modifying the model informations
-        df = pd.read_csv("./states/simu7.txt",sep="\t")
+        df = pd.read_csv(file_path,sep="\t")
         df["X"]=df["X"].apply(convertX)
         
         self.ks=df["ks"][0]
@@ -97,6 +99,9 @@ class Plot(model.Model):
         
         self.bacteria = B
         self.N=len(self.bacteria)
+
+        # file 
+        self.file = file_path
 
         # Initial drawings
         self.autoscale(1)
@@ -116,6 +121,7 @@ class Plot(model.Model):
 
             # Draw the bacteria
             self.draw_bacteria()
+            # self.color_surface()
 
             # Draw the axises
             if(self.axis_state):
@@ -413,28 +419,30 @@ class Plot(model.Model):
         p_ray = cdisk.radius*self.convert/self.graduation + ray_offset
         pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
 
-        # Drawing a consistant hull
+    def color_surface(self):
+        """ Calculates the convexhull and colors the surface"""
+        L = []
+        for i in range(self.N):
+            b = self.bacteria[i]
+            for j in range(b.p_i):
+                L.append([b.Disks[j].X[0],b.Disks[j].X[1]])
+        points = np.array(L)
+        hull = ConvexHull(points)
 
-        # self.draw_hull(L_above,L_under,bact.points())
+        for simplex in hull.simplices:
+            # converting the positions from micrometers to pixels
+            X1 = points[simplex, 0]
+            print(type(X1))
+            X2 = points[simplex, 1]
+            p_x1 = (X1[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
+            p_y1= self.height - (X1[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
 
-    def draw_hull(self,L_above,L_under,disks_points):
-        """Draw the hull of a bacteria from two lists of points"""
-        la = len(L_above)
-        lu = len(L_under)
-        # x = np.linspace(0,1,10)
-        # plt.plot(x,x)
+            p_x2 = (X2[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
+            p_y2= self.height - (X2[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
+
+            pygame.draw.line(self.window,self.black,[p_x1,p_y1],[p_x2,p_y2],3)
+            # plt.plot(points[simplex, 0], points[simplex, 1], '+-',)
         # plt.show()
-        i=0
-        k=0
-        for j in range(1,max(la-1,lu-1)):
-            # X = np.array(disks_points[j])
-            if(j<la-1):
-                pygame.draw.line(self.window,self.black,L_above[i],L_above[j],width=1)
-                i+=1
-            if(j<lu-1):
-                pygame.draw.line(self.window,self.black,L_under[k],L_under[j],width=1)
-                k+=1
-
     ### ----------------------- Events methods ---------------------------------------
 
     def event(self):
@@ -584,7 +592,16 @@ class Plot(model.Model):
         self.y_origin = (self.height/2-self.axis_origin)*self.graduation/self.convert
         self.y_origin =-(self.y_origin - self.y_origin%5)
 
-        
+    def save(self):
+        """Display the bacteria in black and make a save"""
+        self.window.fill((220,220,220))
+        for bact in self.bacteria:
+            bact.color=(0,0,0)
+            self.draw_bacterium_full(bact)
+        pygame.display.flip()
+        pygame.image.save(self.window,"./"+self.file[:-4]+".png")
+        pygame.quit()
+
 if __name__=="__main__":
-    plot= Plot()
+    plot= Plot("./states/data14.txt")
     plot.mainloop()

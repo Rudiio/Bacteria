@@ -26,8 +26,8 @@ class Model:
         
         # Stiffnesses with micrometer
         self.ks = 10        # Springs linear stiffness
-        self.kt_par = 0.1   # Springs torsion parallel stiffness
-        self.kt_bot = 0.1   # Springs torsion bot stiffness
+        self.kt_par = 10   # Springs torsion parallel stiffness
+        self.kt_bot = 10   # Springs torsion bot stiffness
         self.kc = 10        # Collision stiffness
 
         self.stiffness = (self.ks,self.kt_par,self.kt_bot,self.kc)
@@ -51,14 +51,18 @@ class Model:
         self.rest_spring_l = self.radius
         self.theta = np.pi
 
+        # friction parameter
+        self.mu = 0.1
+
         # Simulation parameters
         self.disk_add_method =  4 # decide the position of the new disk
         # self.dt = 0.01
         dtt = np.array([self.radius**2/(self.ks),self.radius/(self.kt_par),self.radius/(self.kt_bot),4*self.radius**2/(self.kc)])
-        self.dt = dtt.min()*0.1 # 0.01  # in min
+        self.dt = self.mu*self.l_ini*dtt.min()*0.1 # 0.01  # in min
         self.time = 0.0
         self.tmax = 150
 
+        
         # Mesh parameters
         # Size of the mesh
         self.Nx = 60
@@ -392,7 +396,7 @@ class Model:
 
             # Calculation of the velocity
             mesh_param = (self.xmin,self.ymin,self.dx,self.Nx)
-            bact.spring_velocity(i,self.bacteria,first_cell,mesh_param)
+            bact.spring_velocity(i,self.bacteria,first_cell,mesh_param,self.mu)
 
     def bacteria_processes(self):
         """ Apply all the processes of the bacteria """
