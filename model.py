@@ -9,7 +9,6 @@ import numpy as np
 import random
 from numpy.linalg import norm
 
-
 class Model:
     """Class for the modelisation
     It is composed of :
@@ -23,9 +22,9 @@ class Model:
     def __init__(self):
         """Constructor for the model class"""
         #Creation of the list of bacteria
-        
+       
         # Stiffnesses with micrometer
-        self.ks = 10        # Springs linear stiffness
+        self.ks = 10       # Springs linear stiffness
         self.kt_par = 10   # Springs torsion parallel stiffness
         self.kt_bot = 10   # Springs torsion bot stiffness
         self.kc = 10        # Collision stiffness
@@ -52,17 +51,16 @@ class Model:
         self.theta = np.pi
 
         # friction parameter
-        self.mu = 0.1
+        self.mu = 0.2
 
         # Simulation parameters
-        self.disk_add_method =  4 # decide the position of the new disk
+        self.disk_add_method =  5 # decide the position of the new disk
         # self.dt = 0.01
         dtt = np.array([self.radius**2/(self.ks),self.radius/(self.kt_par),self.radius/(self.kt_bot),4*self.radius**2/(self.kc)])
         self.dt = self.mu*self.l_ini*dtt.min()*0.1 # 0.01  # in min
         self.time = 0.0
-        self.tmax = 150
+        self.tmax = 150 
 
-        
         # Mesh parameters
         # Size of the mesh
         self.Nx = 60
@@ -422,10 +420,8 @@ class Model:
         """Increment the total time of simulation by dt"""
         self.time +=self.dt
     
-    def write_txt(self,s):
-        """" Writes the data into a txt file"""
+    def write_columns(self,s):
         file = open(s,"a")
-        
         file.write("N disks\t")
         file.write("Disks radius\t")
         file.write("time\t")
@@ -438,7 +434,11 @@ class Model:
         file.write("div_length\t")
         file.write("X")
         file.write("\n")
+        file.close()
 
+    def write_txt(self,s):
+        """" Writes the data into a txt file"""
+        file = open(s,"a")
         for bact in self.bacteria:
             file.write(f"{bact.p_i}\t")
             file.write(f"{self.radius}\t")
@@ -457,9 +457,15 @@ class Model:
     
     def mainloop(self):
         """Main loop of the application/simulation"""
-        
+
+        s = r"./simulations/simuc1.txt"
+        self.write_columns(s)
         start = time.time()
-        while self.time <= self.tmax :     
+        last_int = 0
+        while self.time <= self.tmax :
+            if(int(self.time)%3==0 and int(self.time)!=last_int):
+                last_int = int(self.time)
+                self.write_txt(s)
 
             #Move the bacteria
             self.bacteria_processes()
@@ -468,11 +474,12 @@ class Model:
             self.increment_time()
             print("time=",self.time)
 
+
         end = time.time()
         print(end-start)
         
         #Writing the final data
-        self.write_txt(r"./states/simu7.txt")
+        self.write_txt(s)
 
 
 if __name__=="__main__":

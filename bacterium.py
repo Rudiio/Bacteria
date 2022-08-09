@@ -1,4 +1,5 @@
 # class
+import scipy
 import disk 
 
 # Calculations
@@ -15,7 +16,8 @@ def increment_reject():
     """ Simulates the law of the increment distribution """
 
     # Density to fit
-    f = joblib.load("./kde/increment.pkl")
+    data = np.load("./increment.npy")
+    f = stats.gaussian_kde(data)
 
     # Parameters of our gaussian hull
     mu=3.23
@@ -26,7 +28,7 @@ def increment_reject():
     while not t:
         x = random.gauss(mu,sigma)
         u = random.random()
-
+        
         if(c*g(x,mu,sigma)*u < f(x)):
             t = True
             return x 
@@ -55,6 +57,7 @@ class Bacterium:
         self.L = 1
         self.update_length()
         self.max_length = self.L + increment_reject()   # length of  divison in micrometer
+        # print(self.max_length)
 
         # Springs parameters
         self.theta = theta  # Rest torque
@@ -791,11 +794,6 @@ class Bacterium:
 
         for i in range(self.p_i):
             self.Disks[i].X = self.Disks[i].X + dt*self.Disks[i].V      # Calculation in meter and s (Si)
-            
-
         
-        
-        
-
 if __name__=="__main__":
     print("test")

@@ -1,7 +1,6 @@
 from os import environ
 import os
 import datetime
-import matplotlib.pyplot as plt
 import time
 
 # Pygame
@@ -114,11 +113,9 @@ class Application(model.Model):
             # Updating the screen
             self.clock.tick()
             pygame.display.flip()
+        
         end = time.time()
         print(end-start)
-        
-        #Writing the final data
-        # self.write_txt()
 
         pygame.quit()
     
@@ -588,3 +585,5 @@ class Application(model.Model):
 if __name__=="__main__":
     app = Application()
     app.mainloop()
+
+# u_t-Delta u=f

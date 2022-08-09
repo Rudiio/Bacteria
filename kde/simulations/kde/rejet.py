@@ -5,13 +5,11 @@ from scipy import stats
 import random
 
 # Distribution à fit
-data = np.load("../increment.npy")
-incre = stats.gaussian_kde(data)
+incre = joblib.load("./increment.pkl")
 x = np.linspace(0,10,100)
 y = incre(x)
 indmax = 32
 mu = 3.23
-
 # Gaussienne
 
 mu=3.23

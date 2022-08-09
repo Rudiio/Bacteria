@@ -58,7 +58,7 @@ class Plot(model.Model):
         """Display parameters"""
         #Size of the window 
         self.height = 600
-        self.width = 1200
+        self.width = 1000
         self.window = pygame.display.set_mode([self.width,self.height],pygame.RESIZABLE)
         pygame.display.set_caption("Bacteria micro-colonies simulator")
         self.black =  (0,0,0)
@@ -89,6 +89,10 @@ class Plot(model.Model):
         df = pd.read_csv(file_path,sep="\t")
         df["X"]=df["X"].apply(convertX)
         
+        df["time"] = df["time"].apply(int)
+        df = df.loc[df["time"]==df["time"].max()]
+        df = df.reset_index()
+
         self.ks=df["ks"][0]
         self.kt_bot=df["kt_bot"][0]
         self.kt_par=df["kt_par"][0]
@@ -97,6 +101,8 @@ class Plot(model.Model):
         self.time=df["time"][0]
         B=df["X"].apply(X_to_bact,args=(self.radius,))
         
+        dtt = np.array([self.radius**2/(self.ks),self.radius/(self.kt_par),self.radius/(self.kt_bot),4*self.radius**2/(self.kc)])
+        self.dt = self.mu*self.l_ini*dtt.min()*0.1 # 0.01  # in min
         self.bacteria = B
         self.N=len(self.bacteria)
 
@@ -348,6 +354,7 @@ class Plot(model.Model):
 
     def draw_bacterium_full(self,bact : bact.Bacterium):
         """Draw the hull of the bacteria : spherocylinder and colors  the inside"""
+
         # Points du dessus
         x = np.zeros((bact.p_i,2))
         x_next = np.zeros((bact.p_i,2))
@@ -364,6 +371,14 @@ class Plot(model.Model):
         ray_offset = 0
 
         #iteration on the disks
+        #converting the positions from micrometers to pixels
+        cdisk = bact.Disks[bact.p_i -1] #Current disk
+        p_x = (cdisk.X[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
+        p_y = self.height - (cdisk.X[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
+        p_ray = cdisk.radius*self.convert/self.graduation + ray_offset
+        pygame.draw.circle(self.window,self.black,(p_x,p_y),p_ray+1,1)
+        pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
+
         for i in range(bact.p_i-1):
             cdisk = bact.Disks[i] #Current disk
             ndisk = bact.Disks[i+1]
@@ -403,21 +418,20 @@ class Plot(model.Model):
             x4 = [p_x_next + (p_ray)*np.cos(alpha2),p_y_next + (p_ray)*np.sin(alpha2)]
             
             #drawing the lines
+            if i==0:
+                pygame.draw.circle(self.window,self.black,(p_x,p_y),p_ray+1,1)
             pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
             pygame.draw.polygon(self.window,bact.color,[x1,x4,x3,x2])
+
+            # Point lists
             L_above.append(x1)
             L_above.append(x4)
             L_under.append(x2)
             L_under.append(x3)
 
-
-        cdisk = bact.Disks[bact.p_i -1] #Current disk
-
-        #converting the positions from micrometers to pixels
-        p_x = (cdisk.X[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
-        p_y = self.height - (cdisk.X[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
-        p_ray = cdisk.radius*self.convert/self.graduation + ray_offset
-        pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
+        for i in range(len(L_above)-1):
+            pygame.draw.line(self.window,self.black,L_above[i],L_above[i+1])
+            pygame.draw.line(self.window,self.black,L_under[i],L_under[i+1])
 
     def color_surface(self):
         """ Calculates the convexhull and colors the surface"""
@@ -603,5 +617,5 @@ class Plot(model.Model):
         pygame.quit()
 
 if __name__=="__main__":
-    plot= Plot("./states/data14.txt")
+    plot= Plot("./simulations/simuc1.txt")
     plot.mainloop()
