@@ -54,8 +54,7 @@ class Model:
         self.mu = 0.2
 
         # Simulation parameters
-        self.disk_add_method =  5 # decide the position of the new disk
-        # self.dt = 0.01
+        self.disk_add_method = 7 # decide the position of the new disk
         dtt = np.array([self.radius**2/(self.ks),self.radius/(self.kt_par),self.radius/(self.kt_bot),4*self.radius**2/(self.kc)])
         self.dt = self.mu*self.l_ini*dtt.min()*0.1 # 0.01  # in min
         self.time = 0.0
@@ -325,6 +324,10 @@ class Model:
             # Noises
             self.division_noise(L1,L2)
 
+            # Make the bacteria collide
+            if(self.disk_add_method==7):
+                L1.reverse()
+
             # Oppose the direction of the daughters
             # L2.reverse()
 
@@ -430,6 +433,7 @@ class Model:
         file.write("kt_bot\t")
         file.write("kt_par\t")
         file.write("kc\t")
+        file.write("color\t")
         file.write("current length\t")
         file.write("div_length\t")
         file.write("X")
@@ -448,6 +452,7 @@ class Model:
             file.write(f"{self.kt_bot}\t")
             file.write(f"{self.kt_par}\t")
             file.write(f"{self.kc}\t")
+            file.write(f"{bact.color}\t")
             file.write(f"{bact.L}\t")
             file.write(f"{bact.max_length}\t")
             for j in range(bact.p_i):
@@ -458,7 +463,7 @@ class Model:
     def mainloop(self):
         """Main loop of the application/simulation"""
 
-        s = r"./simulations/simuc1.txt"
+        s = r"./simulations/simuc11.txt"
         self.write_columns(s)
         start = time.time()
         last_int = 0

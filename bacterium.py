@@ -77,7 +77,8 @@ class Bacterium:
 
         # Growth method
         self.growth_method = gm
-
+        self.side = -1
+        
         # Collision constant
         self.kc = stiffness[3]  # Collision stiffness
 
@@ -443,13 +444,20 @@ class Bacterium:
             elif method==3:
                 self.add_disk32()
             
-            # One side equilibrum
+            # One random side equilibrum
             elif method==4:
                 self.add_disk4()
             
             # Two sides equilibrum
             elif method==5:
                 self.add_disk5()
+            
+            # One fixed side equilibrum
+            elif method==6:
+                self.add_disk6()
+                # One fixed side equilibrum
+            elif method==7:
+                self.add_disk7()
 
     def add_disk1(self):
         """Add a new disk is added not at equilibrum into the bacterium on one side of the bacterium
@@ -772,6 +780,86 @@ class Bacterium:
         # the disk is added in the tail
         Y = np.array([self.Disks[self.p_i-1].X[0] + l*np.cos(alpha),self.Disks[self.p_i-1].X[1] + l*np.sin(alpha)])
         self.Disks.append(disk.Disk(Y,ray=self.Disks[0].radius))
+        
+        # Updating the number of disks
+        self.p_i +=1
+
+    def add_disk6(self):
+        """Add a new disk is added not at equilibrum into the bacterium on one side of the bacterium
+        chosen randomly"""
+        
+        if self.side==-1:
+            self.side = random.random()
+
+        # the disk is added in the head
+        if(self.side > 0.5):
+            l = self.spring_rest_l
+
+            # calculation of the angle
+            if(self.p_i==1):
+                alpha = random.uniform(0,2*np.pi)
+            else :
+                d_head = self.Disks[0]
+                d_tail = self.Disks[1]
+                vec1 = np.array([d_tail.X[0] - d_head.X[0],d_tail.X[1] - d_head.X[1]])
+                vec2 = np.array([2,0])
+
+                if(d_tail.X[1] - d_head.X[1]<=0):
+                    alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+                else:
+                    alpha = np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+                
+            X = np.array([self.Disks[0].X[0] - l*np.cos(alpha),self.Disks[0].X[1] - l*np.sin(alpha)])
+            self.Disks.insert(0,disk.Disk(X,ray=self.Disks[0].radius))
+        
+        # the disk is added in the tail
+        else:
+            l = self.spring_rest_l
+
+            # Calculation of the angle
+            if(self.p_i==1):
+                alpha = random.uniform(0,2*np.pi)
+            else :
+                d_head = self.Disks[self.p_i -2]
+                d_tail = self.Disks[self.p_i -1]
+                vec1 = np.array([d_tail.X[0] - d_head.X[0],d_tail.X[1] - d_head.X[1]])
+                vec2 = np.array([2,0])
+
+                if(d_tail.X[1] - d_head.X[1]<=0):
+                    alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+                else:
+                    alpha = np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+            
+            X = np.array([self.Disks[self.p_i-1].X[0] + l*np.cos(alpha),self.Disks[self.p_i-1].X[1] + l*np.sin(alpha)])
+            self.Disks.append(disk.Disk(X,ray=self.Disks[0].radius))
+        
+        # Updating the number of disks
+        self.p_i +=1
+
+    def add_disk7(self):
+        """Add a new disk is added not at equilibrum into the bacterium on one side of the bacterium
+        chosen randomly"""
+        
+        # the disk is added in the head
+        l = self.spring_rest_l
+
+        # calculation of the angle
+        if(self.p_i==1):
+            alpha = random.uniform(0,2*np.pi)
+        else :
+            d_head = self.Disks[0]
+            d_tail = self.Disks[1]
+            vec1 = np.array([d_tail.X[0] - d_head.X[0],d_tail.X[1] - d_head.X[1]])
+            vec2 = np.array([2,0])
+
+            if(d_tail.X[1] - d_head.X[1]<=0):
+                alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+            else:
+                alpha = np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)+self.eps))
+            
+        X = np.array([self.Disks[0].X[0] - l*np.cos(alpha),self.Disks[0].X[1] - l*np.sin(alpha)])
+        self.Disks.insert(0,disk.Disk(X,ray=self.Disks[0].radius))
+    
         
         # Updating the number of disks
         self.p_i +=1

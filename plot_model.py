@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import time
 import pandas as pd
 from scipy.spatial import ConvexHull
+import matplotlib.colors
 
 # Pygame
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
@@ -22,19 +23,15 @@ import disk
 import bacterium as bact
 import model
 
+
 def convertX(L):
     T = L.split(" ")
     T.pop()
     return np.array(T,dtype=float)
 
 def X_to_bact(L,radius):
-    Disks =[]
-    
-    for i in range(0,L.shape[0]-1,2):
-        Disks.append(disk.Disk(np.array([L[i],L[i+1]]),ray=radius))
-    
-    color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
-    return bact.Bacterium(N=len(Disks),Disks=Disks,color=color)
+    Disks =[disk.Disk(np.array([L[i],L[i+1]]),ray=radius) for i in range(0,L.shape[0]-1,2)]
+    return bact.Bacterium(N=len(Disks),Disks=Disks,color=(135,206,235))
 
 class Plot(model.Model):
     """Class for handleling the graphical aspect and interface of the simulations
@@ -50,7 +47,7 @@ class Plot(model.Model):
     - pixel length of a graduation
     - axis origin (y-axis is reverted)"""
 
-    def __init__(self,file_path):
+    def __init__(self,file_path,time=-1):
         """Constructor for the display/pygame class"""
         #Creation of the window/tk object
         pygame.init()
@@ -83,16 +80,23 @@ class Plot(model.Model):
         self.axis_state = True
         self.zoom_state = 1 #zoom and dezoom state
 
-        self.drawing_bacteria_state=1
+        self.drawing_bacteria_state=3
 
         # Modifying the model informations
-        df = pd.read_csv(file_path,sep="\t")
-        df["X"]=df["X"].apply(convertX)
+        self.path = file_path
+        self.df = pd.read_csv(file_path,sep="\t")
         
-        df["time"] = df["time"].apply(int)
-        df = df.loc[df["time"]==df["time"].max()]
-        df = df.reset_index()
+        self.df["X"]=self.df["X"].apply(convertX)
+        self.df["time"] = self.df["time"].apply(int)
 
+        df = self.df
+        if(time==-1):
+            df = df.loc[df["time"]==df["time"].max()]
+            df = df.reset_index()
+        else:
+            df = df.loc[df["time"]==time]
+            df = df.reset_index()
+        
         self.ks=df["ks"][0]
         self.kt_bot=df["kt_bot"][0]
         self.kt_par=df["kt_par"][0]
@@ -108,7 +112,7 @@ class Plot(model.Model):
 
         # file 
         self.file = file_path
-
+        
         # Initial drawings
         self.autoscale(1)
         self.draw_axis()
@@ -606,16 +610,66 @@ class Plot(model.Model):
         self.y_origin = (self.height/2-self.axis_origin)*self.graduation/self.convert
         self.y_origin =-(self.y_origin - self.y_origin%5)
 
-    def save(self):
+    def save(self,temp=0):
         """Display the bacteria in black and make a save"""
         self.window.fill((220,220,220))
         for bact in self.bacteria:
             bact.color=(0,0,0)
             self.draw_bacterium_full(bact)
         pygame.display.flip()
-        pygame.image.save(self.window,"./"+self.file[:-4]+".png")
+        if(temp==0):
+            pygame.image.save(self.window,"./"+self.file[:-4]+".png")
+        else:
+            pygame.image.save(self.window,"./"+"temp"+".png")
+        pygame.quit()
+
+    def video(self):
+        """Register images of all the times"""
+        
+        pygame.time.delay(5000)
+        # Loading the data
+        df = self.df
+        t=0
+        while t <df["time"].shape[0] and self.running:
+            # Selecting the data corresponding to the time
+            cdf = df.loc[df["time"]==df["time"][t]]
+            cdf = cdf.reset_index()
+            self.time=cdf["time"][0]
+
+            # Extracting the bacteria
+            B=cdf["X"].apply(X_to_bact,args=(self.radius,))
+            self.bacteria = B
+            self.N=len(self.bacteria)
+            
+            # Events
+            self.event()
+
+            # Fill the background with white
+            # self.window.fill((255, 255, 255))
+            self.window.fill((220,220,220))
+
+            # Draw the bacteria
+            self.draw_bacteria()
+            # self.color_surface()
+
+            # Draw the axises
+            if(self.axis_state):
+                self.draw_axis()
+
+            #Draw the informations
+            self.draw_informations()
+
+            if(self.N<6):
+                pygame.time.delay(30)
+
+            # Updating the screen
+            self.clock.tick()
+            pygame.display.flip()
+            t+=1
+        
         pygame.quit()
 
 if __name__=="__main__":
-    plot= Plot("./simulations/simuc1.txt")
-    plot.mainloop()
+    plot= Plot("./simulations/simuc10.txt")
+    plot.video()
+    # plot.mainloop()
