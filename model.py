@@ -24,10 +24,10 @@ class Model:
         #Creation of the list of bacteria
        
         # Stiffnesses with micrometer
-        self.ks = 10       # Springs linear stiffness
+        self.ks = 1       # Springs linear stiffness
         self.kt_par = 10   # Springs torsion parallel stiffness
         self.kt_bot = 10   # Springs torsion bot stiffness
-        self.kc = 10        # Collision stiffness
+        self.kc = 10       # Collision stiffness
 
         self.stiffness = (self.ks,self.kt_par,self.kt_bot,self.kc)
 
@@ -54,11 +54,13 @@ class Model:
         self.mu = 0.2
 
         # Simulation parameters
-        self.disk_add_method = 7 # decide the position of the new disk
+        self.disk_add_method = 4 # decide the position of the new disk
         dtt = np.array([self.radius**2/(self.ks),self.radius/(self.kt_par),self.radius/(self.kt_bot),4*self.radius**2/(self.kc)])
         self.dt = self.mu*self.l_ini*dtt.min()*0.1 # 0.01  # in min
+        if(self.ks<10):
+            self.dt/=2
         self.time = 0.0
-        self.tmax = 150 
+        self.tmax = 200
 
         # Mesh parameters
         # Size of the mesh

@@ -31,7 +31,9 @@ def convertX(L):
 
 def X_to_bact(L,radius):
     Disks =[disk.Disk(np.array([L[i],L[i+1]]),ray=radius) for i in range(0,L.shape[0]-1,2)]
-    return bact.Bacterium(N=len(Disks),Disks=Disks,color=(135,206,235))
+    color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+    # return bact.Bacterium(N=len(Disks),Disks=Disks,color=(135,206,235))
+    return bact.Bacterium(N=len(Disks),Disks=Disks,color=color)
 
 class Plot(model.Model):
     """Class for handleling the graphical aspect and interface of the simulations
@@ -670,6 +672,6 @@ class Plot(model.Model):
         pygame.quit()
 
 if __name__=="__main__":
-    plot= Plot("./simulations/simuc10.txt")
-    plot.video()
-    # plot.mainloop()
+    plot= Plot("./simulations/simuc16.txt")
+    # plot.video()
+    plot.mainloop()
