@@ -465,7 +465,7 @@ class Model:
     def mainloop(self):
         """Main loop of the application/simulation"""
 
-        s = r"./simulations/simuc11.txt"
+        s = r"./simulations/flat.txt"
         self.write_columns(s)
         start = time.time()
         last_int = 0

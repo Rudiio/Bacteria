@@ -40,6 +40,23 @@ Here are the studied parameters:
 - **grate** : growth rate of the bacterium
 - **width** 
 
+## Simulations and Quantifiers
+
+Simulations can be launched through the model.py file. They are saved into the simualtions folder.
+These simulations are exploited to calculates the quantifiers of the model :
+
+1. The aspect ratio **$\alpha_r$** : quantify the shape of the colony, more precisely its elongation. It needs two lengths, $l$ that can be interpreted as a Width and $L$ that is similar to a Length. In our case, we calculate the ellipse that fit the convex hull of the colony : $l$ is the semi-minor axis and $L$ the semi-major axis.
+    Then $\alpha_r= \frac{l}{L}$.
+    
+2. The density **$\delta$**: it is calculated with image analysis tool. It is the ration between the surface occupied by the bacteria and the surface of the hull of the colony.
+    
+3. The length quantifier **$s$** : it represents the global distance of the linear springs from their rest length/equilibrium.
+    
+    $s = \frac{1}{N} \sum^N_{i=1} \frac{1}{p_i - 1} \sum^{p_i-1}_{j=1} ||X_{j+1}^i - X_j^i| - l|$
+    
+4. The bending energy **$E_t$** : it quantifies the bending of the bacteria. 0 represents the perfect bending equilibrium. It is calculated from the second and third terms of the equation (1).
+
+Thy can be calculated by the quantifiers jupyter notebook and ploted by the quantifiers_plot notebook.
 
 ## Commands
 
@@ -87,4 +104,4 @@ To install Joblib (with pip package manager)
 
 ## Simulations
 
-![simu](https://github.com/Rudiio/Images-factory/blob/main/bacteria3.png)
+![simu](https://github.com/Rudiio/Images-factory/blob/main/simu11.png)

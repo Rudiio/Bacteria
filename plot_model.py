@@ -625,6 +625,16 @@ class Plot(model.Model):
             pygame.image.save(self.window,"./"+"temp"+".png")
         pygame.quit()
 
+    def save2(self,temp=0):
+        """Display the bacteria in black and make a save"""
+        self.window.fill((220,220,220))
+        for bact in self.bacteria:
+            self.draw_bacterium_full(bact)
+        pygame.display.flip()
+        
+        pygame.image.save(self.window,"./4cells_arrays/"+self.file[9:-4]+".png")
+        pygame.quit()
+
     def video(self):
         """Register images of all the times"""
         
@@ -672,6 +682,6 @@ class Plot(model.Model):
         pygame.quit()
 
 if __name__=="__main__":
-    plot= Plot("./simulations/simuc16.txt")
+    plot= Plot("./simulations/simuc18.txt")
     # plot.video()
     plot.mainloop()
