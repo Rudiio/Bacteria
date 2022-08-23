@@ -24,10 +24,10 @@ class Model:
         #Creation of the list of bacteria
        
         # Stiffnesses with micrometer
-        self.ks = 1       # Springs linear stiffness
+        self.ks = 15       # Springs linear stiffness
         self.kt_par = 10   # Springs torsion parallel stiffness
         self.kt_bot = 10   # Springs torsion bot stiffness
-        self.kc = 10       # Collision stiffness
+        self.kc = 10      # Collision stiffness
 
         self.stiffness = (self.ks,self.kt_par,self.kt_bot,self.kc)
 
@@ -61,6 +61,7 @@ class Model:
             self.dt/=2
         self.time = 0.0
         self.tmax = 200
+        # print(self.dt)
 
         # Mesh parameters
         # Size of the mesh

@@ -32,8 +32,8 @@ def convertX(L):
 def X_to_bact(L,radius):
     Disks =[disk.Disk(np.array([L[i],L[i+1]]),ray=radius) for i in range(0,L.shape[0]-1,2)]
     color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
-    # return bact.Bacterium(N=len(Disks),Disks=Disks,color=(135,206,235))
-    return bact.Bacterium(N=len(Disks),Disks=Disks,color=color)
+    return bact.Bacterium(N=len(Disks),Disks=Disks,color=(135,206,235))
+    # return bact.Bacterium(N=len(Disks),Disks=Disks,color=color)
 
 class Plot(model.Model):
     """Class for handleling the graphical aspect and interface of the simulations
@@ -623,6 +623,8 @@ class Plot(model.Model):
             pygame.image.save(self.window,"./"+self.file[:-4]+".png")
         else:
             pygame.image.save(self.window,"./"+"temp"+".png")
+        # print("grad=",self.graduation)
+        # print("conver=",self.convert)
         pygame.quit()
 
     def save2(self,temp=0):
@@ -632,13 +634,13 @@ class Plot(model.Model):
             self.draw_bacterium_full(bact)
         pygame.display.flip()
         
-        pygame.image.save(self.window,"./4cells_arrays/"+self.file[9:-4]+".png")
+        pygame.image.save(self.window,"./method7/quantifiers/4cell_arrays/"+self.file[9:-4]+".png")
         pygame.quit()
 
     def video(self):
         """Register images of all the times"""
         
-        pygame.time.delay(5000)
+        # pygame.time.delay(5000)
         # Loading the data
         df = self.df
         t=0
@@ -682,6 +684,6 @@ class Plot(model.Model):
         pygame.quit()
 
 if __name__=="__main__":
-    plot= Plot("./simulations/simuc18.txt")
-    # plot.video()
+    plot= Plot("./simulations/simuc8.txt")
+    plot.video()
     plot.mainloop()
