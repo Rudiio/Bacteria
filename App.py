@@ -410,10 +410,6 @@ class Application(model.Model):
         p_ray = cdisk.radius*self.convert/self.graduation + ray_offset
         pygame.draw.circle(self.window,bact.color,(p_x,p_y),p_ray)
 
-        # Drawing a consistant hull
-
-        # self.draw_hull(L_above,L_under,bact.points())
-
     def draw_hull(self,L_above,L_under,disks_points):
         """Draw the hull of a bacteria from two lists of points"""
         la = len(L_above)

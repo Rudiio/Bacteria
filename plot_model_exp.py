@@ -2,7 +2,6 @@ from ast import arg
 from os import environ
 import os
 import datetime
-from re import X
 import matplotlib.pyplot as plt
 import time
 import pandas as pd
@@ -25,15 +24,83 @@ import model
 
 
 def convertX(L):
+    """Convert the Actual X data from the files into Arrays"""
     T = L.split(" ")
     T.pop()
     return np.array(T,dtype=float)
 
-def X_to_bact(L,radius):
+def meanX(X):
+    """Calculate the center of the colony"""
+    x = X[0::2]
+    y = X[1::2]
+    return [x.mean(),y.mean()]
+
+def X_to_bact(L,radius,cmap):
+    """Converts the Arrays of positions into actual bacteria"""
     Disks =[disk.Disk(np.array([L[i],L[i+1]]),ray=radius) for i in range(0,L.shape[0]-1,2)]
-    color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
-    return bact.Bacterium(N=len(Disks),Disks=Disks,color=(135,206,235))
+    # color= (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+    
+     ## To fit the colors to the orientation
+    alpha = 0
+    d_head = Disks[0]
+    d_tail = Disks[len(Disks) - 1]
+    vec1 = np.array([d_tail.X[0] - d_head.X[0],d_tail.X[1] - d_head.X[1]])
+    vec2 = np.array([2,0])
+
+    if(d_tail.X[1] - d_head.X[1]<=0):
+        alpha = 2*np.pi - np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)))
+    else:
+        alpha = np.arccos(np.dot(vec1,vec2)/(norm(vec1)*norm(vec2)))
+
+    if alpha > np.pi:
+        alpha -= np.pi
+
+    rgb = cmap(alpha/np.pi,bytes=True)
+    return bact.Bacterium(N=len(Disks),Disks=Disks,color=rgb)
     # return bact.Bacterium(N=len(Disks),Disks=Disks,color=color)
+
+def fill_gradient(surface, color, gradient, rect=None, vertical=True, forward=True):
+    """fill a surface with a gradient pattern
+    Parameters:
+    color -> starting color
+    gradient -> final color
+    rect -> area to fill; default is surface's rect
+    vertical -> True=vertical; False=horizontal
+    forward -> True=forward; False=reverse
+    
+    Pygame recipe: http://www.pygame.org/wiki/GradientCode
+    """
+    if rect is None: rect = surface.get_rect()
+    x1,x2 = rect.left, rect.right
+    y1,y2 = rect.top, rect.bottom
+    if vertical: h = y2-y1
+    else:        h = x2-x1
+    if forward: a, b = color, gradient
+    else:       b, a = color, gradient
+
+    rate = (
+        float(b[0]-a[0])/(h),
+        float(b[1]-a[1])/h,
+        float(b[2]-a[2])/h
+    )
+    
+    fn_line = pygame.draw.line
+    if vertical:
+        for line in range(y1,y2):
+            color = (
+                min(max(a[0]+(rate[0]*(line-y1)),0),255),
+                min(max(a[1]+(rate[1]*(line-y1)),0),255),
+                min(max(a[2]+(rate[2]*(line-y1)),0),255)
+            )
+            fn_line(surface, color, (x1,line), (x2,line))
+    else:
+        for col in range(x1,x2):
+            color = (
+                min(max(a[0]+(rate[0]*(col-x1)),0),255),
+                min(max(a[1]+(rate[1]*(col-x1)),0),255),
+                min(max(a[2]+(rate[2]*(col-x1)),0),255)
+            )
+            fn_line(surface, color, (col,y1), (col,y2))
 
 class Plot(model.Model):
     """Class for handleling the graphical aspect and interface of the simulations
@@ -84,14 +151,24 @@ class Plot(model.Model):
 
         self.drawing_bacteria_state=3
 
+        # bacteria colormap
+        self.cvals  = [0, np.pi/4, np.pi/2,3*np.pi/4,np.pi]
+        self.colors = ["red","lawngreen","aqua","blue","red"]
+
+        norm=plt.Normalize(min(self.cvals),max(self.cvals))
+        tuples = list(zip(map(norm,self.cvals), self.colors))
+        self.cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", tuples)
+
         # Modifying the model informations
         self.path = file_path
         self.df = pd.read_csv(file_path,sep="\t")
         
+        # Data processing
         self.df["X"]=self.df["X"].apply(convertX)
         self.df["time"] = self.df["time"].apply(int)
-
         df = self.df
+
+        # Selecting the data at the rigth time
         if(time==-1):
             df = df.loc[df["time"]==df["time"].max()]
             df = df.reset_index()
@@ -99,31 +176,37 @@ class Plot(model.Model):
             df = df.loc[df["time"]==time]
             df = df.reset_index()
         
+        # Loading the parameters from the file
         self.ks=df["ks"][0]
         self.kt_bot=df["kt_bot"][0]
         self.kt_par=df["kt_par"][0]
         self.kc=df["kc"][0]
         self.radius=df["Disks radius"][0]
         self.time=df["time"][0]
-        B=df["X"].apply(X_to_bact,args=(self.radius,))
+
+        # Exctracting the bacteria from the file
+        B=df["X"].apply(X_to_bact,args=(self.radius,self.cmap))
         radiuses = df["Disks radius"]
+        self.bacteria = B
+        self.N=len(self.bacteria)
 
         for i in range(len(B)):
             bact = B[i]
             for j in range(bact.p_i):
                 B[i].Disks[j].radius = radiuses[i]
-        
-        # dtt = np.array([self.radius**2/(self.ks),self.radius/(self.kt_par),self.radius/(self.kt_bot),4*self.radius**2/(self.kc)])
-        # self.dt = self.mu*self.l_ini*dtt.min()*0.1 # 0.01  # in min
+    
         self.dt = 0
-        self.bacteria = B
-        self.N=len(self.bacteria)
 
         # file 
         self.file = file_path
         
         # Initial drawings
         self.autoscale(1)
+
+        ## Rescaling
+        self.df_max = df
+        self.centering(df)
+
         self.draw_axis()
         self.draw_bacteria()
 
@@ -148,6 +231,7 @@ class Plot(model.Model):
 
             #Draw the informations
             self.draw_informations()
+            self.draw_gradient_scale()
 
             # Updating the screen
             self.clock.tick()
@@ -445,30 +529,66 @@ class Plot(model.Model):
             pygame.draw.line(self.window,self.black,L_above[i],L_above[i+1])
             pygame.draw.line(self.window,self.black,L_under[i],L_under[i+1])
 
-    def color_surface(self):
-        """ Calculates the convexhull and colors the surface"""
-        L = []
-        for i in range(self.N):
-            b = self.bacteria[i]
-            for j in range(b.p_i):
-                L.append([b.Disks[j].X[0],b.Disks[j].X[1]])
-        points = np.array(L)
-        hull = ConvexHull(points)
+    def draw_gradient_scale(self):
+        """ Draw the gradient scale"""
 
-        for simplex in hull.simplices:
-            # converting the positions from micrometers to pixels
-            X1 = points[simplex, 0]
-            print(type(X1))
-            X2 = points[simplex, 1]
-            p_x1 = (X1[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
-            p_y1= self.height - (X1[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
+        ### Drawing the rectangle
+        g_x = self.width-150
+        g_y = self.height/4
+        g_width = 50
+        g_height = 3*self.height/4 - 1.5*self.axis_origin
+        rect = pygame.Rect(g_x,g_y,g_width,g_height)
+        pygame.draw.rect(self.window,self.black,rect,1)
 
-            p_x2 = (X2[0]-self.x_origin)*self.convert/self.graduation + self.axis_origin
-            p_y2= self.height - (X2[1]-self.y_origin)*self.convert/self.graduation - self.axis_origin
+        ### Drawing the graduations and colors
+        grad_width = 5
 
-            pygame.draw.line(self.window,self.black,[p_x1,p_y1],[p_x2,p_y2],3)
-            # plt.plot(points[simplex, 0], points[simplex, 1], '+-',)
-        # plt.show()
+        # PI
+        pygame.draw.line(self.window,self.black,start_pos=[g_x+g_width,g_y],end_pos=[
+                                    g_x+grad_width+g_width,g_y],width=1)
+        text = self.font.render("PI",True,self.black)
+        self.window.blit(text,(g_x+g_width+8,g_y - 8))
+
+        # Gradient
+        rect1 = pygame.Rect(g_x+1,g_y+1,g_width-3,g_height/4-1)
+        fill_gradient(self.window,(255,0,0),(0,0,255),rect1)
+
+        # 3PI/4
+        pygame.draw.line(self.window,self.black,start_pos=[g_x+g_width,g_y+g_height/4],end_pos=[
+                                    g_x+grad_width+g_width,g_y+g_height/4],width=1)
+        text = self.font.render("3PI/4",True,self.black)
+        self.window.blit(text,(g_x+g_width+8,g_y+g_height/4 - 8))
+        
+        # Gradient
+        rect1 = pygame.Rect(g_x+1,g_y+g_height/4-1,g_width-3,g_height/4)
+        fill_gradient(self.window,(0,0,255),(0,255,255),rect1)
+
+        # PI/2        
+        pygame.draw.line(self.window,self.black,start_pos=[g_x+g_width,g_y+g_height/2],end_pos=[
+                                    g_x+grad_width+g_width,g_y+g_height/2],width=1)
+        text = self.font.render("PI/2",True,self.black)
+        self.window.blit(text,(g_x+g_width+8,g_y+g_height/2 - 8))
+
+        # Gradient
+        rect1 = pygame.Rect(g_x+1,g_y+g_height/2-1,g_width-3,g_height/4)
+        fill_gradient(self.window,(0,255,255),(124,252,0),rect1)
+
+        # PI/4        
+        pygame.draw.line(self.window,self.black,start_pos=[g_x+g_width,g_y+3*g_height/4],end_pos=[
+                                    g_x+grad_width+g_width,g_y+3*g_height/4],width=1)
+        text = self.font.render("PI/4",True,self.black)
+        self.window.blit(text,(g_x+g_width+8,g_y+3*g_height/4 - 8))
+
+        # Gradient
+        rect1 = pygame.Rect(g_x+1,g_y+3*g_height/4-1,g_width-3,g_height/4+1)
+        fill_gradient(self.window,(124,252,0),(255,0,0),rect1)
+
+        # 0       
+        pygame.draw.line(self.window,self.black,start_pos=[g_x+g_width,g_y+g_height-1],end_pos=[
+                                    g_x+grad_width+g_width,g_y+g_height-1],width=1)
+        text = self.font.render("0",True,self.black)
+        self.window.blit(text,(g_x+g_width+8,g_y+g_height-1 - 8))
+
     ### ----------------------- Events methods ---------------------------------------
 
     def event(self):
@@ -544,6 +664,7 @@ class Plot(model.Model):
 
     def zoom(self):
         """Do a zoom"""
+    
         if(1<self.zoom_state <=5):
             # if(self.zoom_state==1):
             #     self.graduation = 1
@@ -567,11 +688,12 @@ class Plot(model.Model):
         #     self.convert += 5
         #     self.zoom_state -=1
         
-        self.autoscale(0)
+        # self.autoscale(0)
+        self.centering(self.df_max)
 
     def dezoom(self):
         """Do a zoom"""
-
+        
         if(self.zoom_state <5):
             self.convert -= 6
             self.zoom_state += 1
@@ -592,6 +714,7 @@ class Plot(model.Model):
         #         self.convert -= 5
         #     self.zoom_state +=1
         self.autoscale(0)
+        self.centering(self.df_max)
 
     def stop(self):
         """Close the window"""
@@ -618,6 +741,28 @@ class Plot(model.Model):
         self.y_origin = (self.height/2-self.axis_origin)*self.graduation/self.convert
         self.y_origin =-(self.y_origin - self.y_origin%5)
 
+    def centering(self,df):
+        """Center the image on the center of the colony"""
+
+        ## Rescaling
+        # Calculating the meaan position
+        T = df["X"].apply(meanX)
+        L=[]
+        for t in T:
+            L=L+t
+        x = np.array(L[0::2])
+        y = np.array(L[1::2])
+
+        xc = x.mean()
+        yc = y.mean() -5
+
+        # Changing the center
+        self.x_origin = (self.width/2-self.axis_origin)*self.graduation/self.convert
+        self.x_origin =-(self.x_origin - self.x_origin%5) +xc
+        
+        self.y_origin = (self.height/2-self.axis_origin)*self.graduation/self.convert
+        self.y_origin =-(self.y_origin - self.y_origin%5) +yc
+
     def save(self,temp=0):
         """Display the bacteria in black and make a save"""
         self.window.fill((220,220,220))
@@ -632,38 +777,43 @@ class Plot(model.Model):
         # print("grad=",self.graduation)
         # print("conver=",self.convert)
         pygame.quit()
+        return self.graduation,self.convert
 
     def save2(self,temp=0):
         """Display the bacteria in black and make a save"""
         self.window.fill((220,220,220))
         for bact in self.bacteria:
             self.draw_bacterium_full(bact)
+             # Draw the axises
+            self.draw_axis()
+
+            self.draw_gradient_scale()
         pygame.display.flip()
         
-        pygame.image.save(self.window,"./method7/quantifiers/4cell_arrays/"+self.file[9:-4]+".png")
+        pygame.image.save(self.window,"../Data_Duvernoy_converted/quantifiers/4cell/"+self.file[32:-4]+".png")
         pygame.quit()
 
     def video(self):
-        """Register images of all the times"""
-        
-        # pygame.time.delay(5000)
+        """Animates the colony formation for all time"""
         # Loading the data
         df = self.df
         t=0
-        while t <df["time"].shape[0] and self.running:
+        T = df["time"]
+        T = T.drop_duplicates()
+
+        for t in T:
+            
+            if not self.running:
+                pygame.quit()
+                exit()
+
             # Selecting the data corresponding to the time
-            cdf = df.loc[df["time"]==df["time"][t]]
+            cdf = df.loc[df["time"]==t]
             cdf = cdf.reset_index()
             self.time=cdf["time"][0]
 
             # Extracting the bacteria
-            B=cdf["X"].apply(X_to_bact,args=(self.radius,))
-            radiuses = df["Disks radius"]
-            for i in range(len(B)):
-                bact = B[i]
-                for j in range(bact.p_i):
-                    B[i].Disks[j].radius = radiuses[i]
-
+            B=cdf["X"].apply(X_to_bact,args=(self.radius,self.cmap))
             self.bacteria = B
             self.N=len(self.bacteria)
             
@@ -681,12 +831,12 @@ class Plot(model.Model):
             # Draw the axises
             if(self.axis_state):
                 self.draw_axis()
-
+            self.draw_gradient_scale()
             #Draw the informations
             self.draw_informations()
 
-            if(self.N<6):
-                pygame.time.delay(30)
+            
+            pygame.time.delay(50)
 
             # Updating the screen
             self.clock.tick()
@@ -695,8 +845,61 @@ class Plot(model.Model):
         
         pygame.quit()
 
+    def video_TIF(self,s):
+        """Saves screenshot of each time of the evolution of the colony"""
+
+        # Loading the data
+        df = self.df
+        t=0
+        T = df["time"]
+        T = T.drop_duplicates()
+
+        for t in T:
+
+            # Selecting the data corresponding to the time
+            cdf = df.loc[df["time"]==t]
+            cdf = cdf.reset_index()
+            self.time=cdf["time"][0]
+
+            # Extracting the bacteria
+            B=cdf["X"].apply(X_to_bact,args=(self.radius,self.cmap))
+            self.bacteria = B
+            self.N=len(self.bacteria)
+            
+            # Events
+            self.event()
+
+            # Fill the background with white
+            # self.window.fill((255, 255, 255))
+            self.window.fill((220,220,220))
+
+            # Draw the bacteria
+            self.draw_bacteria()
+
+            # Draw the axises
+            if(self.axis_state):
+                self.draw_axis()
+            self.draw_gradient_scale()
+
+            #Draw the informations
+            self.draw_informations()
+
+            # Updating the screen
+            self.clock.tick()
+            pygame.display.flip()
+            pygame.image.save(self.window,s+str(t)+".png")
+            t+=1
+
+        pygame.quit()
+
 if __name__=="__main__":
-    plot= Plot("./Data_Duvernoy_converted/Coli/Coli1.txt")
+    plot= Plot("./Data_Duvernoy_converted/Coli/Coli2.txt")
     # plot= Plot("./Data_Duvernoy_converted/pseudomonas/pseudo1.txt")
-    # plot.video()
-    plot.mainloop()
+    
+    ### Uncomment and comment to the needs
+    ## To have animations
+    # plot.video_TIF("./video_TIF/Coli1/")
+    plot.video()
+
+    ## Static view
+    # plot.mainloop()

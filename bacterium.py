@@ -10,10 +10,13 @@ from scipy import stats
 import joblib
 
 def g(x,mu,sigma):
+    """ Density of a Normal law"""
     return 1/(sigma*np.sqrt(2*np.pi))*np.exp(-0.5*((x-mu)/sigma)**2)
 
 def increment_reject():
-    """ Simulates the law of the increment distribution """
+    """ Simulates the law of the increment distribution
+    Only the increment of E.coli can be simulated here.
+    A new hull is needed for the pseudomonas increment. """
 
     # Density to fit
     data = np.load("./increment.npy")
@@ -357,9 +360,6 @@ class Bacterium:
                         v += self.kc/((2*self.Disks[0].radius)**2)*(1-(2*self.Disks[0].radius)/(norm(Xj-Xl)+self.eps))*(Xj-Xl)
                         self.Disks[j].V -= v
 
-                        # bacteria[i].Disks[l].vplus(v)
-                        # cbact.Disks[l].V += v
-    
     def repulsion_2disks(self,cdisk :disk.Disk,odisk:disk.Disk):
         """" Calculate the repulsion force applied by a odisk on cdisk"""
         Xj = cdisk.X
@@ -417,7 +417,7 @@ class Bacterium:
     ## GROWTH
     
     def growth(self,t,method,max_length):
-        """ Handle the growth proccess of thre bacterium 
+        """ Handle the growth process of thre bacterium 
         add a new disk if t_i > t. The position of the new bacteria depends on method"""
 
         rate_i = 1/(self.gk*self.p_i) 

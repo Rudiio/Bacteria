@@ -24,9 +24,9 @@ class Model:
         #Creation of the list of bacteria
        
         # Stiffnesses with micrometer
-        self.ks = 15       # Springs linear stiffness
-        self.kt_par = 10   # Springs torsion parallel stiffness
-        self.kt_bot = 10   # Springs torsion bot stiffness
+        self.ks = 10       # Springs linear stiffness
+        self.kt_par = 15   # Springs torsion parallel stiffness
+        self.kt_bot = 15   # Springs torsion bot stiffness
         self.kc = 10      # Collision stiffness
 
         self.stiffness = (self.ks,self.kt_par,self.kt_bot,self.kc)
@@ -54,7 +54,7 @@ class Model:
         self.mu = 0.2
 
         # Simulation parameters
-        self.disk_add_method = 4 # decide the position of the new disk
+        self.disk_add_method = 7 # decide the position of the new disk
         dtt = np.array([self.radius**2/(self.ks),self.radius/(self.kt_par),self.radius/(self.kt_bot),4*self.radius**2/(self.kc)])
         self.dt = self.mu*self.l_ini*dtt.min()*0.1 # 0.01  # in min
         if(self.ks<10):
@@ -427,7 +427,11 @@ class Model:
         self.time +=self.dt
     
     def write_columns(self,s):
+        """" Write the columns labels into a text file"""
+
+        # Opening the file
         file = open(s,"a")
+
         file.write("N disks\t")
         file.write("Disks radius\t")
         file.write("time\t")
@@ -441,11 +445,16 @@ class Model:
         file.write("div_length\t")
         file.write("X")
         file.write("\n")
+
+        # Closing the file
         file.close()
 
     def write_txt(self,s):
-        """" Writes the data into a txt file"""
+        """" Writes the actual data of the simulation into a txt file"""
+
+        # Opening the file 
         file = open(s,"a")
+
         for bact in self.bacteria:
             file.write(f"{bact.p_i}\t")
             file.write(f"{self.radius}\t")
@@ -461,15 +470,20 @@ class Model:
             for j in range(bact.p_i):
                 file.write(f"{bact.Disks[j].X[0]} {bact.Disks[j].X[1]} ")
             file.write("\n")
+
+        # Closing the file
         file.close()
     
     def mainloop(self):
         """Main loop of the application/simulation"""
 
-        s = r"./simulations/flat.txt"
+        # The path and name of the file to create
+        s = r"./simulations/simu.txt"
+
         self.write_columns(s)
         start = time.time()
-        last_int = 0
+        last_int = 0 # serves to write only one time for each time
+
         while self.time <= self.tmax :
             if(int(self.time)%3==0 and int(self.time)!=last_int):
                 last_int = int(self.time)
