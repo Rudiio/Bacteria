@@ -119,6 +119,7 @@ The results are text files in the same format that with **model.py**.
 ### data.ipynb
 
 It extracts the data from the experimental data from Duvernoy. The results are plots of the distributions of the different important features. Everything is explained into the file.
+I did not push the data on the repository as they are not mine but the just put the folder **Data_Duvernoy** in the same the folder.
 
 ## Simulations
 
